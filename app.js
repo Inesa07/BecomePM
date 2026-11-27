@@ -54,7 +54,7 @@ const persist = () => { store.set('becomepm-xp2', XP); store.set('becomepm-cases
 const C = () => CASES.find(c => c.id === S.caseId) || CASES[0];
 const INS = () => C().ins;
 const app = document.getElementById('app');
-const go = v => { if (v === 'library' && S.view !== 'library') S.prev = S.view; S.view = v; S.last = null; render(); window.scrollTo(0, 0); };
+const go = v => { S.view = v; S.last = null; render(); window.scrollTo(0, 0); };
 const level = () => { let i = 0; LEVELS.forEach((l, k) => { if (XP >= l[0]) i = k; }); const next = LEVELS[i + 1]; return { n: i + 1, name: LEVELS[i][1], from: LEVELS[i][0], to: next ? next[0] : LEVELS[i][0] + 300 }; };
 const levelPct = () => { const lv = level(); return Math.min(100, Math.round((XP - lv.from) / (lv.to - lv.from) * 100)); };
 const unlocked = c => c.n === 1 || !!PROG[CASES[c.n - 2].id];
@@ -446,8 +446,7 @@ function home() {
     ['principles', 'Мышление продакта', `${PRINCIPLES.length} логических правил, которые помогают решать любые продуктовые задачи.`, 'Читать'],
     ['stories', 'Истории продуктов', 'Как Instagram и Slack нашли успех — и почему провалились Quibi и Google Glass.', 'Читать']
   ];
-  return `<div class="wrap">
-    ${header()}
+  return `<div class="pagein">
     <section class="hero">
       <div style="flex:1 1 420px;display:flex;flex-direction:column;gap:24px">
         <span style="font-size:13px;color:var(--amber);font-weight:600">Игра-симулятор для тех, кто хочет стать продакт-менеджером</span>
@@ -474,7 +473,6 @@ function home() {
     </section>
     <section class="band"><div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap"><h2 class="h2" style="margin:0">Истории успехов и провалов</h2><button class="navlink" data-lib="stories">Все истории →</button></div>
       <div class="docards" style="margin-top:20px">${STORIES.slice(0, 3).concat(STORIES.slice(3, 4)).map(st => storyCard(st, true)).join('')}</div></section>
-    ${footer()}
   </div>`;
 }
 const storyCard = (st, short) => `<article class="card story"><div style="display:flex;justify-content:space-between;gap:10px;align-items:center"><span class="label" style="color:${st.kind === 'успех' ? 'var(--teal)' : 'var(--rose)'}">${st.kind} · ${st.year}</span><span style="font-size:13px;color:var(--mute)">${st.name}</span></div><span class="serif" style="font-size:21px;line-height:1.3">${st.title}</span>${short ? '' : `<p style="margin:0;color:var(--soft);line-height:1.7;font-size:15px">${st.text}</p>`}<p class="serif it" style="margin:${short ? 'auto 0 0' : '0'};color:var(--amber);font-size:15px;line-height:1.5">${st.lesson}</p></article>`;
@@ -518,32 +516,65 @@ function hub() {
       <div style="display:flex;align-items:center;gap:10px"><div style="display:flex">${c.cast.map((x, i) => `<span style="margin-left:${i ? -8 : 0}px;display:flex">${av(x, 30)}</span>`).join('')}</div><span style="font-size:12px;color:var(--mute)">~${c.minutes} минут · навык: ${c.skill}</span></div>
       <button class="${p ? 'line-btn' : 'btn'}" data-case="${c.id}" style="margin-top:auto;text-align:center">${p ? 'Пройти заново' : 'Начать кейс'}</button></div>`;
   };
-  const day = Math.floor(Date.now() / 864e5), word = GLOSSARY[day % GLOSSARY.length], tip = PRINCIPLES[day % PRINCIPLES.length];
-  const road = LEVELS.map(([xp, name], i) => {
-    const done = i + 1 < lv.n, now = i + 1 === lv.n;
-    return `<li class="${done ? 'rd' : now ? 'rn' : ''}"><i>${done ? '✓' : ''}</i><div><b>${name}</b><small>${now ? `сейчас · ещё ${Math.max(0, lv.to - XP)} опыта до следующего` : done ? 'пройдено' : 'от ' + xp + ' опыта'}</small></div></li>`;
-  }).join('');
-  const side = `<aside class="hubside">
-      <nav class="sidenav" aria-label="Разделы"><button class="on" data-go="hub">Кейсы <small>${played}/${CASES.length}</small></button><button data-lib="glossary">Словарь продакта</button><button data-lib="principles">Мышление продакта</button><button data-lib="stories">Истории продуктов</button></nav>
-      <div class="card sidecard"><div class="person">${av('me', 44)}<div style="flex:1;display:flex;flex-direction:column;gap:6px"><span class="label" style="color:var(--amber)">Уровень ${lv.n}</span><span class="serif" style="font-size:19px">${lv.name}</span></div></div><div class="bar" style="height:4px"><i style="width:${levelPct()}%"></i></div><span style="font-size:12px;color:var(--mute)">${XP} / ${lv.to} опыта</span></div>
-      <div class="card sidecard"><span class="label">Путь продакта</span><ol class="road">${road}</ol></div>
-      <div class="card sidecard"><span class="label" style="color:var(--amber)">Слово дня</span><div><span class="serif" style="font-size:20px">${word.t}</span> <span style="color:var(--mute);font-size:12px">${word.en}</span></div><p>${word.d}</p><button class="navlink" data-lib="glossary" style="padding:0;min-height:0;color:var(--amber)">Весь словарь →</button></div>
-      <div class="card sidecard"><span class="label" style="color:var(--teal)">Совет дня</span><span class="serif" style="font-size:18px;line-height:1.3">${tip.t}</span><p>${tip.d}</p></div>
-    </aside>`;
-  return `<div class="wrap wide">
-    ${header()}
-    <div class="hubgrid">
-    ${side}
-    <main style="min-width:0">
-    <button class="back" data-go="home">← На главную</button>
-    <section style="display:flex;flex-direction:column;gap:12px;padding:24px 0 28px">
+  return `<div class="pagein">
+    <section style="display:flex;flex-direction:column;gap:12px;padding:8px 0 28px">
       <h1 class="serif" style="margin:0;font-weight:500;font-size:clamp(34px,5vw,48px);line-height:1.08">${played ? 'С возвращением.' : 'Готова к первому кейсу?'}</h1><p class="lead">Каждый кейс — история реальной продуктовой проблемы. Кейсы открываются по очереди, как уровни. Пройдено: ${played} из ${CASES.length}.</p>
     </section>
     <div class="cases">${CASES.map(card).join('')}</div>
-    <div class="card" style="margin-top:20px;padding:22px 26px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap"><div style="display:flex;flex-direction:column;gap:4px"><span class="serif" style="font-size:20px">Скоро новые кейсы</span><span style="color:var(--soft);font-size:14px">А пока — загляни в истории реальных продуктов: как Instagram и Slack нашли успех и почему провалился Quibi.</span></div><button class="line-btn" data-lib="stories">Истории продуктов</button></div>
-    </main>
+    <div class="card" style="margin-top:20px;padding:22px 26px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap"><div style="display:flex;flex-direction:column;gap:4px"><span class="serif" style="font-size:20px">Скоро новые кейсы</span><span style="color:var(--soft);font-size:14px">А пока — выучи пару слов продакта или почитай реальные истории продуктов.</span></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="line-btn" data-nav="learn">Учить слова</button><button class="line-btn" data-nav="stories">Истории продуктов</button></div></div>
+  </div>`;
+}
+
+/* ---------- learn words (flashcards) ---------- */
+let KNOWN = store.get('becomepm-words', []) || [];
+const todayN = () => Math.floor(Date.now() / 864e5);
+function learn() {
+  const word = GLOSSARY[todayN() % GLOSSARY.length], tip = PRINCIPLES[todayN() % PRINCIPLES.length];
+  const queue = GLOSSARY.map((g, i) => GLOSSARY[(i + todayN()) % GLOSSARY.length]).filter(g => !KNOWN.includes(g.t));
+  const cur = queue[(S.fc || 0) % Math.max(1, queue.length)];
+  const pct = Math.round(KNOWN.length / GLOSSARY.length * 100);
+  const cardHtml = !queue.length
+    ? `<div class="card flash"><span class="serif" style="font-size:28px">Ты знаешь все ${GLOSSARY.length} слов!</span><p class="lead">Отличная база для любого кейса.</p><button class="line-btn" data-wreset>Начать заново</button></div>`
+    : `<div class="card flash"><span class="label">Карточка ${KNOWN.length + 1} из ${GLOSSARY.length} · ${cur.g}</span>
+        <span class="serif" style="font-size:clamp(30px,4vw,40px);line-height:1.15">${cur.t}</span><span style="color:var(--mute)">${cur.en}</span>
+        ${S.flip ? `<p style="margin:0;color:#D6DCDC;line-height:1.7;font-size:16px">${cur.d}</p><p style="margin:0;font-size:15px;line-height:1.6;border-left:1px solid var(--amber);padding-left:12px;color:var(--soft)"><span style="color:var(--amber)">Пример:</span> ${cur.ex}</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px"><button class="btn" data-wknow="${esc(cur.t)}">Знаю ✓ <span style="opacity:.7">+5 опыта</span></button><button class="line-btn" data-wnext>Повторю позже</button></div>`
+        : `<p style="margin:0;color:var(--mute)">Попробуй вспомнить, что это значит — и проверь себя.</p><button class="btn" data-wflip style="align-self:flex-start">Показать значение</button>`}
+      </div>`;
+  return `<div class="pagein">
+    <h1 class="serif pageh">Учить слова</h1>
+    <p class="lead" style="margin:0 0 24px">Каждый день — новое слово. А карточками можно повторять все слова продакта: вспомни значение, потом проверь себя.</p>
+    <div class="learngrid">
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        <div class="card" style="padding:18px 22px;display:flex;flex-direction:column;gap:10px"><div style="display:flex;justify-content:space-between"><span class="label">Выучено</span><b style="color:var(--amber)">${KNOWN.length} из ${GLOSSARY.length}</b></div><div class="bar" style="height:5px"><i style="width:${pct}%;background:var(--teal)"></i></div></div>
+        ${cardHtml}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card sidecard" style="border-color:var(--amber)"><span class="label" style="color:var(--amber)">Слово дня</span><div><span class="serif" style="font-size:22px">${word.t}</span> <span style="color:var(--mute);font-size:12px">${word.en}</span></div><p>${word.d}</p><p style="border-left:1px solid var(--amber);padding-left:10px"><span style="color:var(--amber)">Пример:</span> ${word.ex}</p></div>
+        <div class="card sidecard"><span class="label" style="color:var(--teal)">Совет дня</span><span class="serif" style="font-size:19px;line-height:1.3">${tip.t}</span><p>${tip.d}</p><button class="navlink" data-nav="principles" style="padding:0;min-height:0;color:var(--teal)">Все правила →</button></div>
+      </div>
     </div>
-    ${footer()}
+  </div>`;
+}
+
+/* ---------- my path ---------- */
+function path() {
+  const lv = level();
+  const road = LEVELS.map(([xp, name], i) => {
+    const done = i + 1 < lv.n, now = i + 1 === lv.n;
+    return `<li class="${done ? 'rd' : now ? 'rn' : ''}"><i>${done ? '✓' : ''}</i><div><b>${name}</b><small>${now ? `ты здесь · ещё ${Math.max(0, lv.to - XP)} опыта до следующего уровня` : done ? 'пройдено' : 'от ' + xp + ' опыта'}</small></div></li>`;
+  }).join('');
+  const rows = CASES.map(c => { const p = PROG[c.id]; return `<div class="row"><div><div class="serif" style="font-size:18px">${c.n}. ${c.title}</div><div style="font-size:13px;color:var(--mute)">навык: ${c.skill}</div></div>${p ? `<span class="pill" style="background:var(--teal)">${p.grade}${p.plays > 1 ? ' · ' + p.plays + ' раза' : ''}</span>` : unlocked(c) ? `<button class="line-btn" data-case="${c.id}" style="font-size:13px;min-height:36px;padding:6px 14px">Начать</button>` : '<span style="font-size:13px;color:var(--mute)">закрыт</span>'}</div>`; }).join('');
+  return `<div class="pagein">
+    <h1 class="serif pageh">Мой путь</h1>
+    <p class="lead" style="margin:0 0 24px">Опыт растёт за решённые кейсы, сохранённые инсайты и выученные слова.</p>
+    <div class="learngrid">
+      <div class="card" style="padding:24px;display:flex;flex-direction:column;gap:16px"><div class="person">${av('me', 56)}<div style="flex:1;display:flex;flex-direction:column;gap:6px"><span class="label" style="color:var(--amber)">Уровень ${lv.n}</span><span class="serif" style="font-size:24px">${lv.name}</span><div class="bar" style="height:4px"><i style="width:${levelPct()}%"></i></div><span style="font-size:12px;color:var(--mute)">${XP} / ${lv.to} опыта</span></div></div><ol class="road big">${road}</ol></div>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card" style="padding:22px"><span class="label">Кейсы</span>${rows}</div>
+        <div class="card sidecard"><span class="label">Выучено слов</span><span class="serif" style="font-size:26px">${KNOWN.length} <span style="font-size:15px;color:var(--mute)">из ${GLOSSARY.length}</span></span><button class="navlink" data-nav="learn" style="padding:0;min-height:0;color:var(--amber)">Учить слова →</button></div>
+      </div>
+    </div>
   </div>`;
 }
 
@@ -573,7 +604,7 @@ function brief() {
 /* ---------- learning library ---------- */
 function library() {
   const tab = S.tab, q = (S.q || '').toLowerCase();
-  const tabs = [['glossary', 'Словарь продакта'], ['principles', 'Мышление продакта'], ['stories', 'Истории продуктов']];
+  const titles = { glossary:'Словарь продакта', principles:'Мышление продакта', stories:'Истории продуктов' };
   let body = '';
   if (tab === 'glossary') {
     const items = GLOSSARY.filter(g => !q || (g.t + ' ' + g.en + ' ' + g.d).toLowerCase().includes(q));
@@ -583,13 +614,10 @@ function library() {
   }
   if (tab === 'principles') body = `<p class="lead" style="margin:6px 0 22px">Это не правила из учебника, а привычки мышления. Они помогают в любом кейсе — и в настоящей работе.</p><div class="glossary">${PRINCIPLES.map((p, i) => `<article class="card term"><span class="serif it" style="color:var(--amber);font-size:24px">${i + 1}</span><span class="serif" style="font-size:21px">${p.t}</span><p style="margin:0;color:var(--soft);line-height:1.65">${p.d}</p></article>`).join('')}</div>`;
   if (tab === 'stories') body = `<p class="lead" style="margin:6px 0 22px">Реальные истории компаний: что они сделали и чему это учит продакта.</p><div class="glossary">${STORIES.map(st => storyCard(st, false)).join('')}</div>`;
-  return `<div class="wrap">
-    ${header()}
-    <button class="back" data-go="${S.prev && S.prev !== 'library' ? S.prev : 'home'}">← Назад</button>
-    <h1 class="serif" style="margin:20px 0 18px;font-weight:500;font-size:clamp(32px,5vw,46px)">Библиотека продакта</h1>
-    <div class="tabs" role="tablist">${tabs.map(([k, t]) => `<button role="tab" aria-selected="${tab === k}" class="${tab === k ? 'on' : ''}" data-lib="${k}">${t}</button>`).join('')}</div>
-    <div style="padding-top:18px">${body}</div>
-    ${footer()}
+  return `<div class="pagein">
+    <h1 class="serif pageh">${titles[tab]}</h1>
+    ${tab === 'glossary' ? '<p class="lead" style="margin:0 0 18px">Главные слова продакт-менеджера простым языком — с примерами. Хочешь запомнить? Открой «Учить слова».</p>' : ''}
+    <div>${body}</div>
   </div>`;
 }
 
@@ -622,14 +650,46 @@ function helpModal() {
   </div></div>`;
 }
 
+
+/* ---------- app shell with left menu ---------- */
+const IC = {
+  home:'<path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/>',
+  hub:'<rect x="4" y="5" width="16" height="14" rx="2"/><path d="M4 10h16"/>',
+  learn:'<rect x="5" y="4" width="11" height="15" rx="2"/><path d="M9 20h9a1 1 0 0 0 1-1V8"/>',
+  glossary:'<path d="M5 5h6a3 3 0 0 1 3 3v12a2 2 0 0 0-2-2H5zM19 5h-3"/><path d="M14 8a3 3 0 0 1 3-3h2v13h-5"/>',
+  principles:'<circle cx="12" cy="10" r="5"/><path d="M10 18h4M10.5 21h3"/>',
+  stories:'<path d="M5 4h14v16l-7-4-7 4z"/>',
+  path:'<path d="M5 19c4 0 3-6 7-6s3-6 7-6"/><circle cx="5" cy="19" r="1.6"/><circle cx="19" cy="7" r="1.6"/>'
+};
+const MENU = [['home', 'Главная'], ['hub', 'Кейсы'], ['learn', 'Учить слова'], ['glossary', 'Словарь'], ['principles', 'Мышление продакта'], ['stories', 'Истории продуктов'], ['path', 'Мой путь']];
+const SHELL_VIEWS = ['home', 'hub', 'library', 'learn', 'path'];
+function shell(inner) {
+  const active = S.view === 'library' ? S.tab : S.view, lv = level();
+  const badge = k => k === 'hub' ? `<small>${Object.keys(PROG).length}/${CASES.length}</small>` : k === 'learn' ? `<small>${KNOWN.length}/${GLOSSARY.length}</small>` : '';
+  return `<div class="shell">
+    <nav class="menu" aria-label="Меню">
+      <span class="menu-logo">${logo()}</span>
+      <div class="menu-items">${MENU.map(([k, t]) => `<button class="${active === k ? 'on' : ''}" data-nav="${k}" ${active === k ? 'aria-current="page"' : ''}><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${IC[k]}</svg><span>${t}</span>${badge(k)}</button>`).join('')}</div>
+      <div class="menu-foot">
+        <button class="menu-lv" data-nav="path">${av('me', 34)}<span style="flex:1;display:flex;flex-direction:column;gap:5px;text-align:left"><span style="font-size:12px"><b>Ур. ${lv.n}</b> <span style="color:var(--mute)">· ${lv.name}</span></span><span class="bar"><i style="width:${levelPct()}%"></i></span></span></button>
+        <button class="menu-help" data-help="open">Как играть</button>
+      </div>
+    </nav>
+    <div class="shell-main"><div class="shell-top">${authArea()}</div>${inner}${footer()}</div>
+  </div>`;
+}
+
 /* ---------- render & events ---------- */
-const VIEWS = { home, intro, hub, brief, work, decide, result, library };
-const TITLES = { home:'Become PM — симулятор продакт-менеджера', intro:'Как играть — Become PM', hub:'Кейсы — Become PM', brief:'Брифинг — Become PM', work:'Работа над кейсом — Become PM', decide:'Защита решения — Become PM', result:'Итог кейса — Become PM', library:'Библиотека продакта — Become PM' };
+const VIEWS = { home, intro, hub, brief, work, decide, result, library, learn, path };
+const TITLES = { home:'Become PM — симулятор продакт-менеджера', intro:'Как играть — Become PM', hub:'Кейсы — Become PM', brief:'Брифинг — Become PM', work:'Работа над кейсом — Become PM', decide:'Защита решения — Become PM', result:'Итог кейса — Become PM', library:'Библиотека продакта — Become PM', learn:'Учить слова — Become PM', path:'Мой путь — Become PM' };
 function render() {
   const focusQ = document.activeElement && document.activeElement.id === 'libq';
-  app.innerHTML = VIEWS[S.view]() + authModal() + helpModal();
+  const fresh_ = S.view !== render.last; render.last = S.view;
+  app.innerHTML = (SHELL_VIEWS.includes(S.view) ? shell(VIEWS[S.view]()) : VIEWS[S.view]()) + authModal() + helpModal();
   const f = app.querySelector('.modal input'); if (f) f.focus();
   if (focusQ) { const i = document.getElementById('libq'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }
+  { const on = app.querySelector('.menu-items .on'); if (on && fresh_ && innerWidth <= 900) on.scrollIntoView({ inline: 'center', block: 'nearest' }); }
+  if (!fresh_) app.querySelectorAll('.pagein').forEach(e => e.style.animation = 'none');
   const t = app.querySelector('.toast');
   if (t) setTimeout(() => { t.style.transition = 'opacity .4s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 2600);
   document.title = TITLES[S.view];
@@ -646,6 +706,11 @@ app.addEventListener('click', e => {
   if ('authsubmit' in d) return authSubmit();
   if ('logout' in d) return logout();
   if (d.lib) { S.tab = d.lib; S.q = ''; return go('library'); }
+  if (d.nav) { if (['glossary', 'principles', 'stories'].includes(d.nav)) { S.tab = d.nav; S.q = ''; return go('library'); } S.flip = false; return go(d.nav); }
+  if ('wflip' in d) { S.flip = true; return render(); }
+  if ('wnext' in d) { S.flip = false; S.fc = (S.fc || 0) + 1; return render(); }
+  if (d.wknow) { if (!KNOWN.includes(d.wknow)) { KNOWN.push(d.wknow); XP += 5; store.set('becomepm-words', KNOWN); persist(); saveProgress(); } S.flip = false; return render(); }
+  if ('wreset' in d) { KNOWN = []; store.set('becomepm-words', KNOWN); S.flip = false; return render(); }
   if (d.case) return startCase(d.case);
   if (d.go) {
     if (d.go === 'intro') S.step = 0;

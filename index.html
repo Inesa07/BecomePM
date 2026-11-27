@@ -203,13 +203,52 @@ input:focus{outline:2px solid var(--amber);outline-offset:1px}
 .road small{font-size:12px;color:var(--mute)}
 .road li.rn small{color:var(--amber)}
 @media(max-width:960px){.hubgrid{grid-template-columns:minmax(0,1fr)}.hubside{position:static;order:2;padding-top:0}.sidenav{display:none}}
+
+/* v3: app shell with left menu */
+.shell{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:100vh}
+.menu{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:18px;padding:24px 14px;border-right:1px solid var(--line);background:var(--bg2)}
+.menu-logo{padding:0 8px 8px}
+.menu-items{display:flex;flex-direction:column;gap:2px}
+.menu-items button{display:flex;align-items:center;gap:12px;background:none;border:0;color:var(--soft);text-align:left;padding:10px 12px;min-height:44px;border-radius:10px;font-size:14px;font-weight:500;width:100%}
+.menu-items button span{flex:1}
+.menu-items button small{color:var(--mute);font-size:11px}
+.menu-items button:hover{background:var(--panel);color:var(--ink)}
+.menu-items button.on{background:var(--panel2);color:var(--ink);box-shadow:inset 2px 0 0 var(--amber)}
+.menu-items button.on svg{color:var(--amber)}
+.menu-foot{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+.menu-lv{display:flex;gap:10px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;color:var(--ink);width:100%}
+.menu-lv .bar{display:block}
+.menu-help{background:none;border:1px solid var(--line);border-radius:999px;color:var(--soft);padding:9px;min-height:40px;font-size:13px}
+.shell-main{min-width:0;padding:20px clamp(18px,3.5vw,48px) 48px;max-width:1240px;width:100%}
+.shell-top{display:flex;justify-content:flex-end;gap:10px;align-items:center;min-height:44px;margin-bottom:12px}
+.pagein{animation:fadeup .35s ease both}
+@keyframes fadeup{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.pageh{margin:6px 0 10px;font-weight:500;font-size:clamp(32px,5vw,46px)}
+.learngrid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(260px,1fr);gap:20px;align-items:start}
+.flash{padding:clamp(22px,3vw,34px);display:flex;flex-direction:column;gap:14px;min-height:300px;background:var(--panel2);border-color:var(--line2)}
+.road.big li{padding-bottom:22px}
+.road.big b{font-size:16px}
+.shell .hero{padding-top:20px}
+@media(max-width:900px){
+ .shell{grid-template-columns:minmax(0,1fr)}
+ .menu{position:sticky;top:0;z-index:20;height:auto;flex-direction:row;align-items:center;gap:8px;padding:8px 10px;border-right:0;border-bottom:1px solid var(--line);overflow-x:auto}
+ .menu-logo{display:none}
+ .menu-items{flex-direction:row;gap:4px}
+ .menu-items button{white-space:nowrap;width:auto;flex:none;padding:8px 12px;min-height:40px}
+ .menu-items button span{flex:none}
+ .menu-items button small,.menu-items button svg{display:none}
+ .menu-items button.on{box-shadow:inset 0 -2px 0 var(--amber)}
+ .menu-foot{display:none}
+ .learngrid{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){.pagein{animation:none}}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="cases.js"></script>
-<script src="library.js"></script>
-<script src="app.js"></script>
+<script src="cases.js?v=3"></script>
+<script src="library.js?v=3"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>
