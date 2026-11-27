@@ -234,7 +234,7 @@ const FIXES = [
 ];
 
 /* ---------- state ---------- */
-const fresh = () => ({ view:'home', day:1, src:'overview', opened:{}, talked:{}, person:'anna', asked:{}, ins:[], last:null, xp:0, cause:null, fix:null, ev:[], result:null, warn:'', step:0, hidden:{}, auth:null });
+const fresh = () => ({ view:'home', day:1, src:'overview', opened:{}, talked:{}, person:'anna', asked:{}, ins:[], last:null, xp:0, cause:null, fix:null, ev:[], result:null, warn:'', step:0, hidden:{}, auth:null, d:null, aiQuality:null, aiFeedback:'' });
 let S = fresh();
 let best = null;
 try { best = localStorage.getItem('becomepm-best'); } catch (e) {}
@@ -529,21 +529,127 @@ function work() {
   </div>${toast}`;
 }
 
+/* ---------- decision: defend it in front of the CEO ---------- */
+const AI_URL = '';   // Supabase Edge Function URL, e.g. https://xxxx.supabase.co/functions/v1/ceo-chat
+const AI_KEY = '';   // Supabase anon (public) key
+const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+const MAX_TURNS = 4;
+const SCRIPT = {
+  cause: {
+    hard: 'Сложный старт? Но мы делали приложение именно для новичков… Почему ты так думаешь? Покажи, на чём это основано.',
+    social: 'Вот! Я же говорил — людям скучно одним. А чем ты это подтвердишь, кроме моего мнения?',
+    dark: 'Тёмная тема? Серьёзно? Ты думаешь, люди уходят из-за цвета экрана? Откуда это?'
+  },
+  fix: {
+    short: 'Укоротить первую тренировку? Маркетинг будет против — они хотели, чтобы она была «настоящей». Почему ты уверена, что это сработает?',
+    push: 'Напоминания — это дёшево. Но решит ли это проблему, или люди просто будут их игнорировать?',
+    social: 'Отлично, соцсеть — это три спринта. Ты точно уверена, что дело в этом?',
+    dark: 'Тёмная тема — один спринт. Но как она вернёт новичков?'
+  }
+};
+function dInit() {
+  if (S.d) return;
+  S.d = { mode: AI_URL && AI_KEY ? 'ai' : 'script', stage: 'cause', msgs: [], att: [], draft: '', busy: false, turns: 0 };
+  S.d.msgs.push({ who: 'max', text: S.d.mode === 'ai' ? 'Ну что, рассказывай. В чём, по-твоему, причина и что будем делать? Можешь прикрепить инсайты как доказательства.' : 'Ну что, рассказывай. В чём, по-твоему, настоящая причина?' });
+}
+function insightsOk(list, hyp) { return list.filter(k => INS[k].hyp === hyp && INS[k].s > 0).length; }
+
+function scriptAnswer(kind, id) {
+  const d = S.d;
+  if (kind === 'cause') {
+    S.cause = id; d.msgs.push({ who: 'me', text: CAUSES.find(c => c.id === id).title });
+    d.msgs.push({ who: 'max', text: SCRIPT.cause[id] }); d.stage = 'ev1';
+  } else if (kind === 'ev') {
+    const picked = d.att.slice(); d.att = [];
+    picked.forEach(k => { if (!S.ev.includes(k) && S.ev.length < 3) S.ev.push(k); });
+    d.msgs.push({ who: 'me', text: picked.length ? picked.map(k => '• ' + INS[k].text).join('\n') : 'Пока у меня нет доказательств.' });
+    const ok = insightsOk(picked, S.cause);
+    if (d.stage === 'ev1') {
+      d.msgs.push({ who: 'max', text: ok >= 2 ? 'Хм. Это звучит убедительно. Ладно, и что ты предлагаешь делать?' : ok === 1 ? 'Один факт — это может быть совпадением. Но допустим. Что предлагаешь делать?' : 'Не убедила. Это не доказательство. Ну хорошо, что ты предлагаешь делать?' });
+      d.stage = 'fix';
+    } else {
+      d.msgs.push({ who: 'max', text: ok >= 1 ? 'Хорошо. Аргументы есть — давай попробуем.' : 'Звучит слабо, но решение за тобой. Посмотрим, что получится.' });
+      d.stage = 'done';
+    }
+  } else if (kind === 'fix') {
+    S.fix = id; d.msgs.push({ who: 'me', text: FIXES.find(f => f.id === id).title });
+    d.msgs.push({ who: 'max', text: SCRIPT.fix[id] }); d.stage = 'ev2';
+  }
+  render(); scrollChat();
+}
+
+async function callAI(mode) {
+  const msgs = S.d.msgs.filter(m => m.who !== 'vera').map(m => ({ role: m.who === 'max' ? 'assistant' : 'user', content: m.text }));
+  const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 25000);
+  try {
+    const r = await fetch(AI_URL, { method:'POST', signal: ctrl.signal, headers:{ 'Content-Type':'application/json', apikey: AI_KEY, Authorization: 'Bearer ' + AI_KEY }, body: JSON.stringify({ mode, messages: msgs, insights: S.ins.map(k => INS[k].text) }) });
+    if (!r.ok) throw new Error('http ' + r.status);
+    const j = await r.json();
+    if (!j.reply) throw new Error('empty');
+    return j.reply;
+  } finally { clearTimeout(t); }
+}
+function fallback() {
+  const d = S.d;
+  d.mode = 'script'; d.busy = false; d.stage = 'cause'; S.cause = null; S.fix = null; S.ev = [];
+  d.msgs.push({ who: 'vera', text: 'ИИ сейчас недоступен — продолжим в упрощённом режиме. Выбирай ответы ниже.' });
+  d.msgs.push({ who: 'max', text: 'Так на чём мы остановились… В чём, по-твоему, настоящая причина?' });
+  render(); scrollChat();
+}
+async function aiSend() {
+  const d = S.d, text = (document.getElementById('draft') || {}).value || '';
+  if (!text.trim() && !d.att.length) return;
+  const att = d.att.slice(); d.att = [];
+  att.forEach(k => { if (!S.ev.includes(k) && S.ev.length < 3) S.ev.push(k); });
+  d.msgs.push({ who: 'me', text: text.trim() + (att.length ? (text.trim() ? '\n' : '') + att.map(k => '• ' + INS[k].text).join('\n') : '') });
+  d.draft = ''; d.busy = true; d.turns++; render(); scrollChat();
+  try {
+    const reply = await callAI('chat');
+    d.msgs.push({ who: 'max', text: reply }); d.busy = false;
+    if (d.turns >= MAX_TURNS) d.stage = 'done';
+    render(); scrollChat();
+  } catch (e) { fallback(); }
+}
+async function aiFinish() {
+  const d = S.d; d.busy = true; render();
+  try {
+    const raw = await callAI('evaluate');
+    const j = JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1));
+    S.cause = ['hard', 'social', 'dark'].includes(j.cause) ? j.cause : 'other';
+    S.fix = ['short', 'push', 'social', 'dark'].includes(j.fix) ? j.fix : 'other';
+    S.aiQuality = Math.max(0, Math.min(10, +j.quality || 0));
+    S.aiFeedback = String(j.feedback || '');
+    evaluate(); go('result');
+  } catch (e) { fallback(); }
+}
+const scrollChat = () => { const c = document.getElementById('chat'); if (c) c.scrollTop = c.scrollHeight; };
+
 function decide() {
-  const opt = (kind, id, title, sub, on, sq) => `<button class="opt ${on ? 'on' : ''} ${sq ? 'sq' : ''}" data-${kind}="${id}"><i></i><span style="display:flex;flex-direction:column;gap:2px"><span>${title}</span>${sub ? `<span style="font-size:12px;color:var(--mute)">${sub}</span>` : ''}</span></button>`;
-  const causes = CAUSES.map(c => { const { pro, con } = supportOf(c.id); return opt('cause', c.id, c.title, `инсайтов за: ${pro}${con ? ` · против: ${con}` : ''}`, S.cause === c.id); }).join('');
-  const fixes = FIXES.map(f => opt('fix', f.id, f.title, f.note, S.fix === f.id)).join('');
-  const ev = S.ins.length ? S.ins.map(k => opt('ev', k, INS[k].text, SRC[INS[k].src].label, S.ev.includes(k), true)).join('') : '<p class="serif it" style="color:var(--mute);margin:0">У тебя нет сохранённых инсайтов. Решение без доказательств будет сложно защитить.</p>';
-  const ready = S.cause && S.fix;
-  return `<div class="wrap" style="max-width:900px">
-    <header class="top"><button class="logo" data-go="home"><b>B</b><span>Become PM</span></button><button class="line-btn" data-go="work">← Вернуться к работе</button></header>
-    <div style="padding:30px 0 10px"><span class="label">День ${S.day} из ${MAX_DAY}</span><h1 class="serif" style="margin:8px 0 6px;font-weight:500;font-size:clamp(30px,4.5vw,40px)">Твоё решение</h1><p style="margin:0;color:var(--soft);font-weight:300">Назови причину, выбери, что делать, и подкрепи решение инсайтами — Максим захочет доказательств.</p></div>
-    <div style="display:flex;flex-direction:column;gap:26px;padding-top:16px">
-      <section style="display:flex;flex-direction:column;gap:10px"><span class="serif" style="font-size:21px">1. В чём настоящая причина?</span>${causes}</section>
-      <section style="display:flex;flex-direction:column;gap:10px"><span class="serif" style="font-size:21px">2. Что будем делать?</span>${fixes}</section>
-      <section style="display:flex;flex-direction:column;gap:10px"><span class="serif" style="font-size:21px">3. Какие инсайты это доказывают? <span style="font-size:14px;color:var(--mute);font-family:Manrope">до 3</span></span>${ev}</section>
-      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:20px"><button class="btn" data-submit ${ready ? '' : 'disabled'} style="font-size:16px;padding:15px 28px">Представить решение</button><span style="font-size:13px;color:var(--mute)">${ready ? 'Решение нельзя будет изменить.' : 'Выбери причину и решение.'}</span></div>
-    </div>
+  dInit();
+  const d = S.d;
+  const bubble = m => m.who === 'me'
+    ? `<div class="bubble-q" style="white-space:pre-line">${esc(m.text)}</div>`
+    : m.who === 'vera'
+      ? `<div class="person" style="align-self:center;background:var(--panel2);border-radius:12px;padding:10px 14px">${av('mentor', 28, 'happy')}<span style="font-size:13px;color:var(--soft)">${esc(m.text)}</span></div>`
+      : `<div class="msg" style="max-width:85%">${av('max', 36)}<div class="bubble-a" style="max-width:100%;white-space:pre-line">${esc(m.text)}</div></div>`;
+  const chips = S.ins.length ? `<div style="display:flex;gap:8px;flex-wrap:wrap">${S.ins.map(k => `<button class="line-btn" data-att="${k}" style="font-size:13px;min-height:36px;padding:6px 12px;${d.att.includes(k) ? 'border-color:var(--amber);color:var(--amber)' : ''}">${d.att.includes(k) ? '✓ ' : '+ '}${INS[k].text}</button>`).join('')}</div>` : '<span style="font-size:13px;color:var(--mute)">У тебя нет сохранённых инсайтов — доказывать будет сложно.</span>';
+  let controls = '';
+  if (d.busy) controls = `<div class="person" style="color:var(--mute)">${av('max', 28)}<span>Максим печатает…</span></div>`;
+  else if (d.mode === 'ai' && d.stage !== 'done') controls = `
+    <span class="label">Прикрепить инсайты</span>${chips}
+    <textarea id="draft" rows="3" placeholder="Напиши своими словами: в чём причина, что предлагаешь и почему…" style="font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line2);border-radius:12px;padding:12px 14px;resize:vertical;width:100%">${esc(d.draft)}</textarea>
+    <div style="display:flex;gap:10px;justify-content:space-between;flex-wrap:wrap;align-items:center"><span style="font-size:12px;color:var(--mute)">Ответов: ${d.turns} из ${MAX_TURNS}</span><div style="display:flex;gap:10px">${d.turns ? '<button class="line-btn" data-finish>Завершить защиту</button>' : ''}<button class="btn" data-send>Отправить</button></div></div>`;
+  else if (d.mode === 'ai') controls = `<button class="btn" data-finish>Узнать результат</button>`;
+  else if (d.stage === 'cause') controls = `<span class="label">Твой ответ</span>${CAUSES.map(c => `<button class="opt" data-scause="${c.id}"><i></i><span>${c.title}</span></button>`).join('')}`;
+  else if (d.stage === 'fix') controls = `<span class="label">Твой ответ</span>${FIXES.map(f => `<button class="opt" data-sfix="${f.id}"><i></i><span style="display:flex;flex-direction:column"><span>${f.title}</span><span style="font-size:12px;color:var(--mute)">${f.note}</span></span></button>`).join('')}`;
+  else if (d.stage === 'ev1' || d.stage === 'ev2') controls = `<span class="label">Ответь инсайтами (до 2)</span>${chips}<button class="btn" data-sev style="align-self:flex-start">Ответить</button>`;
+  else controls = `<button class="btn" data-submit>Узнать результат</button>`;
+  return `<div class="wrap" style="max-width:860px;display:flex;flex-direction:column;min-height:100vh">
+    <header class="top"><button class="logo" data-go="home"><b>B</b><span>Become PM</span></button><span style="font-size:13px;color:var(--mute)">День ${S.day} из ${MAX_DAY}</span></header>
+    <button class="back" data-go="work">← Вернуться к работе</button>
+    <div style="padding:14px 0 16px"><h1 class="serif" style="margin:0 0 6px;font-weight:500;font-size:clamp(28px,4vw,38px)">Защита решения</h1><p style="margin:0;color:var(--soft);font-weight:300">Убеди Максима. Он будет задавать неудобные вопросы — отвечай фактами.${d.mode === 'ai' ? '' : ' <span style="color:var(--mute)">(упрощённый режим)</span>'}</p></div>
+    <div id="chat" class="card" style="flex:1;padding:20px;display:flex;flex-direction:column;gap:14px;overflow:auto;max-height:52vh;min-height:260px">${d.msgs.map(bubble).join('')}</div>
+    <div style="display:flex;flex-direction:column;gap:10px;padding:16px 0">${controls}</div>
   </div>`;
 }
 
@@ -551,7 +657,8 @@ function evaluate() {
   const fix = FIXES.find(f => f.id === S.fix);
   let score = 0;
   if (S.cause === 'hard') score += 35;
-  score += { short:35, push:12, social:0, dark:0 }[S.fix];
+  score += { short:35, push:12, social:0, dark:0, other:0 }[S.fix] || 0;
+  if (S.aiQuality != null) score += Math.round(S.aiQuality * 0.8);
   const proofs = S.ev.filter(k => INS[k].hyp === S.cause && INS[k].s > 0);
   const wrongProofs = S.ev.filter(k => !(INS[k].hyp === S.cause && INS[k].s > 0));
   score += Math.min(3, proofs.length) * 6 - wrongProofs.length * 4;
@@ -561,7 +668,7 @@ function evaluate() {
   score = Math.max(0, Math.min(100, score));
   const grade = score >= 92 ? 'S' : score >= 78 ? 'A' : score >= 58 ? 'B' : score >= 38 ? 'C' : 'D';
   const end = S.fix === 'short' ? 38 : S.fix === 'push' ? 29 : S.fix === 'social' ? 25 : 26;
-  const convinced = proofs.length >= 2;
+  const convinced = proofs.length >= 2 || (S.aiQuality != null && S.aiQuality >= 7);
   S.result = { score, grade, end, convinced, proofs: proofs.length };
   S.xp += score;
   try { const order = 'SABCD'; if (!best || order.indexOf(grade) < order.indexOf(best)) { localStorage.setItem('becomepm-best', grade); best = grade; } } catch (e) {}
@@ -573,7 +680,8 @@ function result() {
     short: S.cause === 'hard' ? ['Причина найдена', 'слишком сложный старт'] : ['Повезло', 'решение сработало, но причину ты назвала неверно'],
     push: ['Частичный успех', 'напоминания лечат симптом, а не причину'],
     social: ['Ложный след', 'соцсеть не вернула новичков'],
-    dark: ['Ложный след', 'тёмная тема нужна, но не новичкам']
+    dark: ['Ложный след', 'тёмная тема нужна, но не новичкам'],
+    other: ['Решение не сработало', 'удержание почти не изменилось']
   }[S.fix];
   const weeks = [26, 26 + (R.end - 26) * .3, 26 + (R.end - 26) * .6, 26 + (R.end - 26) * .85, R.end];
   const maxW = Math.max(...weeks, 30);
@@ -597,7 +705,7 @@ function result() {
     <header class="top"><button class="logo" data-go="home"><b>B</b><span>Become PM</span></button><span style="font-size:12px;letter-spacing:.18em;color:var(--amber);font-weight:600">КЕЙС 1 · ИТОГ</span></header>
     <section class="card" style="position:relative;overflow:hidden;margin-top:28px;padding:clamp(24px,4vw,40px);display:flex;flex-wrap:wrap;gap:32px;align-items:center;border-color:var(--line2)">${conf}
       <div class="grade">${R.grade}</div>
-      <div style="flex:1 1 340px;display:flex;flex-direction:column;gap:10px"><span class="label" style="color:${good ? 'var(--teal)' : 'var(--rose)'}">${heads[0]}</span><h1 class="serif" style="margin:0;font-weight:500;font-size:clamp(28px,4vw,36px);line-height:1.2">${good && S.cause === 'hard' ? 'Причина — <span class="it" style="color:var(--amber)">слишком сложный старт</span>' : heads[1].charAt(0).toUpperCase() + heads[1].slice(1)}</h1><p style="margin:0;font-weight:300;color:var(--soft);line-height:1.7">Ты выбрала: «${FIXES.find(f => f.id === S.fix).title}». Через 4 недели удержание D7: ${R.end}%.</p></div>
+      <div style="flex:1 1 340px;display:flex;flex-direction:column;gap:10px"><span class="label" style="color:${good ? 'var(--teal)' : 'var(--rose)'}">${heads[0]}</span><h1 class="serif" style="margin:0;font-weight:500;font-size:clamp(28px,4vw,36px);line-height:1.2">${good && S.cause === 'hard' ? 'Причина — <span class="it" style="color:var(--amber)">слишком сложный старт</span>' : heads[1].charAt(0).toUpperCase() + heads[1].slice(1)}</h1><p style="margin:0;font-weight:300;color:var(--soft);line-height:1.7">${S.fix === 'other' ? 'Твоё решение не повлияло на настоящую причину.' : `Ты выбрала: «${FIXES.find(f => f.id === S.fix).title}».`} Через 4 недели удержание D7: ${R.end}%.</p></div>
       <div style="flex:0 1 220px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;align-items:flex-end;gap:8px;height:90px" role="img" aria-label="Удержание через 4 недели: ${R.end}%">${weeks.map((v, i) => `<i style="flex:1;height:${v / maxW * 100}%;background:${i === 4 ? (good ? 'var(--teal)' : 'var(--rose)') : 'var(--bar)'};border-radius:4px 4px 0 0"></i>`).join('')}</div><span class="serif" style="font-size:26px">26% → <span style="color:${good ? 'var(--teal)' : 'var(--rose)'}">${R.end}%</span></span></div>
     </section>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px;margin-top:18px">
@@ -605,7 +713,7 @@ function result() {
       <div class="card msg" style="padding:20px">${av('max', 48, good ? 'happy' : 'sad')}<div><div style="font-size:13px;color:var(--mute)">Максим · CEO</div><div class="quote" style="font-size:17px">${ceoLine}</div></div></div>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;margin-top:18px">
-      <section class="card" style="flex:999 1 460px;padding:24px;display:flex;flex-direction:column;gap:14px"><span class="serif" style="font-size:22px">Твой путь</span>${path}
+      <section class="card" style="flex:999 1 460px;padding:24px;display:flex;flex-direction:column;gap:14px"><span class="serif" style="font-size:22px">Твой путь</span>${S.aiFeedback ? `<div class="person" style="align-items:flex-start;background:var(--panel2);border-radius:12px;padding:14px 16px">${av('mentor', 36, 'happy')}<span style="font-size:14px;color:var(--soft);line-height:1.6"><b style="color:var(--ink)">Вера о твоей защите:</b> ${esc(S.aiFeedback)}</span></div>` : ''}${path}
         ${badQs ? `<div style="font-size:14px;color:var(--soft)">Вопросов о мнении или будущем в интервью: <b style="color:var(--amber)">${badQs}</b>. Такие вопросы дают вежливые, но пустые ответы.</div>` : ''}
         <div style="font-size:14px;color:var(--soft)">Доказательств в решении: <b style="color:var(--amber)">${R.proofs}</b>${R.convinced ? '' : ' — CEO нужно хотя бы два, чтобы поверить.'} · Потрачено дней: <b style="color:var(--amber)">${S.day}</b> из ${MAX_DAY}</div>
         <div style="background:var(--panel2);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:6px"><span class="label" style="color:var(--amber)">Что было на самом деле</span><p style="margin:0;font-weight:300;line-height:1.7;color:#D6DCDC">В сентябре маркетинг попросил сделать первую тренировку «настоящей» — 35 минут вместо 15. Новички не справлялись, им было стыдно, и они молча уходили на 3–4 день. Людям было не скучно — им было тяжело. Соцсеть и тёмная тема — реальные просьбы, но от тех, кто и так остаётся.</p></div>
@@ -650,9 +758,12 @@ app.addEventListener('click', e => {
   if (d.talk) return talk(d.talk);
   if (d.ask) { const [p, i] = d.ask.split('|'); return ask(p, +i); }
   if (d.save) return save(d.save);
-  if (d.cause) { S.cause = d.cause; return render(); }
-  if (d.fix) { S.fix = d.fix; return render(); }
-  if (d.ev) { const k = d.ev; S.ev = S.ev.includes(k) ? S.ev.filter(x => x !== k) : S.ev.length < 3 ? S.ev.concat(k) : S.ev; return render(); }
+  if (d.att) { const a = S.d.att, k = d.att; const dr = document.getElementById('draft'); if (dr) S.d.draft = dr.value; const lim = S.d.mode === 'ai' ? 3 : 2; S.d.att = a.includes(k) ? a.filter(x => x !== k) : a.length < lim ? a.concat(k) : a; return render(); }
+  if (d.scause) return scriptAnswer('cause', d.scause);
+  if (d.sfix) return scriptAnswer('fix', d.sfix);
+  if ('sev' in d) return scriptAnswer('ev');
+  if ('send' in d) return aiSend();
+  if ('finish' in d) return aiFinish();
   if ('submit' in d) { if (S.cause && S.fix) { evaluate(); go('result'); } return; }
   if ('restart' in d) { const keep = S.xp; S = fresh(); S.xp = keep; S.view = 'brief'; render(); window.scrollTo(0, 0); }
 });
