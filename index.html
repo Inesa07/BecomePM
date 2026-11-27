@@ -144,6 +144,7 @@ input:focus{outline:2px solid var(--amber);outline-offset:1px}
 </head>
 <body>
 <div id="app"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 {
 /* ---------- avatars ---------- */
@@ -238,6 +239,15 @@ const fresh = () => ({ view:'home', day:1, src:'overview', opened:{}, talked:{},
 let S = fresh();
 let best = null;
 try { best = localStorage.getItem('becomepm-best'); } catch (e) {}
+let savedXp = 0;
+try { savedXp = +localStorage.getItem('becomepm-xp') || 0; } catch (e) {}
+S.xp = savedXp;
+const SB_URL = 'https://hugsvebdqfmvpleqitym.supabase.co';
+const SB_KEY = 'sb_publishable_mvBhXP7ZpL5shSWbWJ-lTg_Crdu3-Ha'; // public key, safe in website code
+const sb = (typeof supabase !== 'undefined' && supabase.createClient) ? supabase.createClient(SB_URL, SB_KEY) : null;
+let user = null; // { id, email, name }
+const ORDER = 'SABCD';
+const better = (a, b) => !a ? b : !b ? a : ORDER.indexOf(a) <= ORDER.indexOf(b) ? a : b;
 
 const app = document.getElementById('app');
 const go = v => { S.view = v; S.last = null; render(); window.scrollTo(0, 0); };
@@ -366,7 +376,7 @@ function insightsPanel() {
 function home() {
   const windows = Array.from({ length: 45 }, (_, i) => `<i class="${[1, 7, 10, 14, 22, 25, 34, 38, 41].includes(i) ? 'l' : [4, 16, 28].includes(i) ? 't' : ''}" style="${[1, 7, 10, 14, 22, 25, 34, 38, 41].includes(i) ? `opacity:${.35 + (i % 5) * .12};animation-delay:${i * .37}s` : ''}"></i>`).join('');
   return `<div class="wrap">
-    <header class="top"><button class="logo" data-go="home"><b>B</b><span>Become PM</span></button><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="line-btn" data-help="open" style="font-size:14px;min-height:40px;border-color:transparent;color:var(--soft)">Как играть</button><button class="line-btn" data-auth="login" style="font-size:14px;min-height:40px">Войти</button><button class="btn" data-auth="signup" style="padding:9px 18px;min-height:40px;font-size:14px">Регистрация</button></div></header>
+    <header class="top"><button class="logo" data-go="home"><b>B</b><span>Become PM</span></button><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="line-btn" data-help="open" style="font-size:14px;min-height:40px;border-color:transparent;color:var(--soft)">Как играть</button>${user ? userChip() : `<button class="line-btn" data-auth="login" style="font-size:14px;min-height:40px">Войти</button><button class="btn" data-auth="signup" style="padding:9px 18px;min-height:40px;font-size:14px">Регистрация</button>`}</div></header>
     <section class="hero">
       <div style="flex:1 1 420px;display:flex;flex-direction:column;gap:24px">
         <span style="font-size:13px;color:var(--amber);font-weight:600">Игра-симулятор для тех, кто хочет стать продакт-менеджером</span>
@@ -441,7 +451,7 @@ function hub() {
   const lv = xpLevel(), pct = Math.min(100, Math.round((S.xp - lv.from) / (lv.to - lv.from) * 100));
   const locked = (n, t, d, skill) => `<div class="card" style="padding:24px;display:flex;flex-direction:column;gap:14px;background:#111A1C"><div style="display:flex;justify-content:space-between;align-items:center"><span class="label">Кейс ${n}</span><span style="font-size:12px;color:var(--mute)">скоро</span></div><span class="serif" style="font-size:22px;line-height:1.25;color:var(--soft)">${t}</span><p style="margin:0;font-size:14px;font-weight:300;line-height:1.6;color:var(--mute)">${d}</p><div style="margin-top:auto;border-top:1px solid var(--line);padding-top:12px;font-size:12px;color:var(--mute)">Навык: ${skill}</div></div>`;
   return `<div class="wrap">
-    <header class="top"><button class="logo" data-go="home"><b>B</b><span>Become PM</span></button><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="line-btn" data-help="open" style="font-size:14px;min-height:40px;border-color:transparent;color:var(--soft)">Как играть</button><button class="line-btn" data-auth="login" style="font-size:14px;min-height:40px">Войти</button><button class="btn" data-auth="signup" style="padding:9px 18px;min-height:40px;font-size:14px">Регистрация</button></div></header>
+    <header class="top"><button class="logo" data-go="home"><b>B</b><span>Become PM</span></button><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="line-btn" data-help="open" style="font-size:14px;min-height:40px;border-color:transparent;color:var(--soft)">Как играть</button>${user ? userChip() : `<button class="line-btn" data-auth="login" style="font-size:14px;min-height:40px">Войти</button><button class="btn" data-auth="signup" style="padding:9px 18px;min-height:40px;font-size:14px">Регистрация</button>`}</div></header>
     <button class="back" data-go="home">← На главную</button>
     <section style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:40px 0 28px">
       <div style="flex:999 1 420px;display:flex;flex-direction:column;gap:12px"><h1 class="serif" style="margin:0;font-weight:500;font-size:clamp(34px,5vw,48px);line-height:1.08">${best ? 'С возвращением.' : 'Готова к первому кейсу?'}</h1><p class="lead">${best ? 'Можешь пройти кейс заново и улучшить результат — или дождаться новых кейсов.' : 'Каждый кейс — история реальной продуктовой проблемы. Выбери кейс, познакомься с компанией и начни работу.'}</p></div>
@@ -461,17 +471,88 @@ function hub() {
   </div>`;
 }
 
+/* ---------- accounts (Supabase) ---------- */
+const RU_ERR = m => /Invalid login/i.test(m) ? 'Неверный email или пароль.'
+  : /already registered|already exists/i.test(m) ? 'Такой email уже зарегистрирован. Попробуй войти.'
+  : /at least 6|Password should/i.test(m) ? 'Пароль должен быть не короче 6 символов.'
+  : /Email not confirmed/i.test(m) ? 'Сначала подтверди email — ссылка в письме.'
+  : /valid email|invalid format/i.test(m) ? 'Проверь, правильно ли написан email.'
+  : /rate limit|too many/i.test(m) ? 'Слишком много попыток. Подожди пару минут.'
+  : 'Что-то пошло не так: ' + m;
+async function setUser(u) {
+  user = u ? { id: u.id, email: u.email, name: (u.user_metadata && u.user_metadata.name) || u.email.split('@')[0] } : null;
+  if (user) await syncProgress();
+  render();
+}
+async function syncProgress() {
+  if (!sb || !user) return;
+  try {
+    const { data } = await sb.from('becomepm_progress').select('xp,best_grade,cases').eq('user_id', user.id).maybeSingle();
+    if (data) {
+      S.xp = Math.max(S.xp, data.xp || 0);
+      best = better(best, data.best_grade);
+      try { localStorage.setItem('becomepm-best', best || ''); localStorage.setItem('becomepm-xp', S.xp); } catch (e) {}
+    }
+    await saveProgress();
+  } catch (e) { console.warn('progress sync failed', e); }
+}
+async function saveProgress(caseResult) {
+  if (!sb || !user) return;
+  try {
+    const row = { user_id: user.id, xp: S.xp, best_grade: best || null, updated_at: new Date().toISOString() };
+    if (caseResult) {
+      const { data } = await sb.from('becomepm_progress').select('cases').eq('user_id', user.id).maybeSingle();
+      const cases = (data && data.cases) || {};
+      const prev = cases.fitstart || {};
+      cases.fitstart = { grade: better(prev.grade, caseResult.grade), bestScore: Math.max(prev.bestScore || 0, caseResult.score), plays: (prev.plays || 0) + 1, last: new Date().toISOString() };
+      row.cases = cases;
+    }
+    const { error } = await sb.from('becomepm_progress').upsert(row);
+    if (error) console.warn('save failed', error.message);
+  } catch (e) { console.warn('save failed', e); }
+}
+async function authSubmit() {
+  if (!sb) { S.auth = 'soon'; return render(); }
+  const v = id => (document.getElementById(id) || {}).value || '';
+  const email = v('a-mail').trim(), pass = v('a-pass'), name = v('a-name').trim();
+  S.authName = name; S.authMail = email;
+  if (!email || !pass) { S.authErr = 'Заполни email и пароль.'; return render(); }
+  S.authBusy = true; S.authErr = ''; render();
+  try {
+    if (S.auth === 'signup') {
+      const { data, error } = await sb.auth.signUp({ email, password: pass, options: { data: { name: name || email.split('@')[0] }, emailRedirectTo: location.origin + location.pathname } });
+      if (error) throw error;
+      if (data.session) { S.auth = 'welcome'; } else { S.auth = 'check'; }
+    } else {
+      const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+      if (error) throw error;
+      S.auth = 'welcome';
+    }
+  } catch (e) { S.authErr = RU_ERR(e.message || String(e)); }
+  S.authBusy = false; render();
+}
+async function logout() { if (sb) await sb.auth.signOut(); user = null; render(); }
+if (sb) {
+  sb.auth.getSession().then(({ data }) => setUser(data.session && data.session.user));
+  sb.auth.onAuthStateChange((ev, session) => { if (ev === 'SIGNED_IN' || ev === 'SIGNED_OUT') setUser(session && session.user); });
+}
+const userChip = () => `<div style="display:flex;gap:10px;align-items:center">${av('me', 32)}<span style="font-size:14px;font-weight:600">${esc(user.name)}</span><button class="line-btn" data-logout style="font-size:13px;min-height:36px;padding:6px 12px">Выйти</button></div>`;
+
 function authModal() {
   if (!S.auth) return '';
   const signup = S.auth === 'signup';
-  const field = (id, label, type, ac) => `<label for="${id}" style="display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--soft)">${label}<input id="${id}" type="${type}" autocomplete="${ac}" style="font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line2);border-radius:10px;padding:12px 14px;min-height:46px"></label>`;
+  const field = (id, label, type, ac) => `<label for="${id}" style="display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--soft)">${label}<input id="${id}" type="${type}" autocomplete="${ac}" value="${esc(id === 'a-name' ? S.authName || '' : id === 'a-mail' ? S.authMail || '' : '')}" style="font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line2);border-radius:10px;padding:12px 14px;min-height:46px"></label>`;
+  const note = (title, text, btn) => `<div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start">${SPARK}<span class="serif" style="font-size:24px">${title}</span><p style="margin:0;color:var(--soft);line-height:1.7">${text}</p><button class="btn" data-auth="close">${btn}</button></div>`;
+  if (S.auth === 'check') return `<div class="modal-bg" data-auth-bg><div class="modal card" role="dialog" aria-modal="true" aria-label="Подтверди email">${note('Проверь почту', `Мы отправили письмо на <b style="color:var(--ink)">${esc(S.authMail || '')}</b>. Нажми ссылку в письме — и аккаунт готов. Если письма нет, загляни в «Спам».`, 'Хорошо')}</div></div>`;
+  if (S.auth === 'welcome') return `<div class="modal-bg" data-auth-bg><div class="modal card" role="dialog" aria-modal="true" aria-label="Готово">${note('Ты в аккаунте', 'Теперь твой уровень и результаты сохраняются, и их можно открыть с любого устройства.', 'Продолжить')}</div></div>`;
   const body = S.auth === 'soon'
     ? `<div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start">${SPARK}<span class="serif" style="font-size:24px">Скоро будет</span><p style="margin:0;color:var(--soft);line-height:1.7">Аккаунты появятся в следующей версии игры. А пока твой прогресс сохраняется в этом браузере — просто возвращайся с того же устройства.</p><button class="btn" data-auth="close">Понятно</button></div>`
     : `<div style="display:flex;gap:6px;background:var(--bg);border-radius:999px;padding:4px">${['signup', 'login'].map(m => `<button data-auth="${m}" style="flex:1;border:0;border-radius:999px;padding:10px;min-height:42px;font-weight:600;background:${S.auth === m ? 'var(--panel2)' : 'transparent'};color:${S.auth === m ? 'var(--ink)' : 'var(--mute)'}">${m === 'signup' ? 'Регистрация' : 'Вход'}</button>`).join('')}</div>
       <span class="serif" style="font-size:24px">${signup ? 'Создай аккаунт' : 'С возвращением'}</span>
       ${signup ? field('a-name', 'Имя', 'text', 'name') : ''}${field('a-mail', 'Email', 'email', 'email')}${field('a-pass', 'Пароль', 'password', signup ? 'new-password' : 'current-password')}
-      <button class="btn" data-authsubmit>${signup ? 'Создать аккаунт' : 'Войти'}</button>
-      <span style="font-size:12px;color:var(--mute);text-align:center">${signup ? 'Играть можно и без аккаунта' : 'Нет аккаунта? Переключись на «Регистрация»'}</span>`;
+      ${S.authErr ? `<span style="font-size:14px;color:var(--rose)">${esc(S.authErr)}</span>` : ''}
+      <button class="btn" data-authsubmit ${S.authBusy ? 'disabled' : ''}>${S.authBusy ? 'Подожди…' : signup ? 'Создать аккаунт' : 'Войти'}</button>
+      <span style="font-size:12px;color:var(--mute);text-align:center">${signup ? 'Пароль — минимум 6 символов. Играть можно и без аккаунта.' : 'Нет аккаунта? Переключись на «Регистрация»'}</span>`;
   return `<div class="modal-bg" data-auth-bg><div class="modal card" role="dialog" aria-modal="true" aria-label="${signup ? 'Регистрация' : 'Вход'}"><button class="line-btn" data-auth="close" aria-label="Закрыть" style="position:absolute;right:14px;top:14px;min-height:36px;padding:4px 12px">✕</button>${body}</div></div>`;
 }
 
@@ -671,7 +752,9 @@ function evaluate() {
   const convinced = proofs.length >= 2 || (S.aiQuality != null && S.aiQuality >= 7);
   S.result = { score, grade, end, convinced, proofs: proofs.length };
   S.xp += score;
-  try { const order = 'SABCD'; if (!best || order.indexOf(grade) < order.indexOf(best)) { localStorage.setItem('becomepm-best', grade); best = grade; } } catch (e) {}
+  best = better(best, grade);
+  try { localStorage.setItem('becomepm-best', best); localStorage.setItem('becomepm-xp', S.xp); } catch (e) {}
+  saveProgress({ grade, score });
 }
 
 function result() {
@@ -721,7 +804,7 @@ function result() {
       <aside style="flex:1 1 280px;display:flex;flex-direction:column;gap:16px">
         <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:12px;border-color:var(--amber);box-shadow:0 0 40px rgba(242,181,107,.12)"><div style="display:flex;justify-content:space-between;align-items:baseline"><span class="label">Опыт</span><b style="color:var(--amber)">+${R.score + S.ins.length * 10}</b></div><span class="serif" style="font-size:22px">Уровень ${lv.n} · <span class="it">${lv.name}</span></span><div class="bar" style="height:4px"><i style="width:${Math.min(100, (S.xp - lv.from) / (lv.to - lv.from) * 100)}%"></i></div><span style="font-size:13px;color:var(--soft)">Новые кейсы появятся в следующей версии.</span></div>
         <div class="ins" style="padding:20px;transform:rotate(-1deg)"><span style="font-size:11px;letter-spacing:.16em;color:#6B4614;font-weight:700">УРОК ПРОДАКТА</span><span class="serif" style="font-size:19px">Спрашивай о прошлом поведении, а не о мнениях и планах. И проверяй, что изменилось в продукте, когда начались проблемы.</span><span style="font-size:13px;color:#5C5547">Подробнее — в книге «The Mom Test», Роб Фитцпатрик</span></div>
-        <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:12px;background:var(--panel2)"><span class="serif" style="font-size:20px">Сохрани свой прогресс</span><span style="font-size:14px;color:var(--soft);line-height:1.6">Создай аккаунт, чтобы не потерять уровень и результаты и играть с любого устройства.</span><button class="btn" data-auth="signup">Создать аккаунт</button><button class="line-btn" data-auth="login" style="text-align:center">У меня уже есть аккаунт</button></div>
+        ${user ? `<div class="card" style="padding:18px 20px;display:flex;gap:12px;align-items:center;background:var(--panel2)"><span class="check" style="background:var(--teal);color:#0D1416">✓</span><span style="font-size:14px;color:var(--soft)">Прогресс сохранён в аккаунте <b style="color:var(--ink)">${esc(user.name)}</b></span></div>` : `<div class="card" style="padding:22px;display:flex;flex-direction:column;gap:12px;background:var(--panel2)"><span class="serif" style="font-size:20px">Сохрани свой прогресс</span><span style="font-size:14px;color:var(--soft);line-height:1.6">Создай аккаунт, чтобы не потерять уровень и результаты и играть с любого устройства.</span><button class="btn" data-auth="signup">Создать аккаунт</button><button class="line-btn" data-auth="login" style="text-align:center">У меня уже есть аккаунт</button></div>`}
         <button class="line-btn" data-go="hub" style="text-align:center">К кейсам</button><button class="line-btn" data-restart style="text-align:center">Пройти кейс заново</button>
       </aside>
     </div>
@@ -744,8 +827,9 @@ app.addEventListener('click', e => {
   if (!b) return;
   const d = b.dataset;
   if (d.help) { S.help = d.help === 'open'; return render(); }
-  if (d.auth) { S.auth = d.auth === 'close' ? null : d.auth; return render(); }
-  if ('authsubmit' in d) { S.auth = 'soon'; return render(); }
+  if (d.auth) { S.auth = d.auth === 'close' ? null : d.auth; S.authErr = ''; return render(); }
+  if ('authsubmit' in d) return authSubmit();
+  if ('logout' in d) return logout();
   if (d.go) {
     if (d.go === 'intro' || d.go === 'brief') S.step = 0;
     if (d.go === 'brief' && S.result) { const keep = S.xp; S = fresh(); S.xp = keep; }
@@ -767,7 +851,8 @@ app.addEventListener('click', e => {
   if ('submit' in d) { if (S.cause && S.fix) { evaluate(); go('result'); } return; }
   if ('restart' in d) { const keep = S.xp; S = fresh(); S.xp = keep; S.view = 'brief'; render(); window.scrollTo(0, 0); }
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && (S.auth || S.help)) { S.auth = null; S.help = false; render(); } });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && S.auth && document.activeElement && document.activeElement.closest('.modal') && document.activeElement.tagName === 'INPUT') { e.preventDefault(); authSubmit(); return; } if (e.key === 'Escape' && (S.auth || S.help)) { S.auth = null; S.help = false; render(); } });
 render();
 }
 </script>
