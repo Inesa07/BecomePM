@@ -530,8 +530,8 @@ function work() {
 }
 
 /* ---------- decision: defend it in front of the CEO ---------- */
-const AI_URL = '';   // Supabase Edge Function URL, e.g. https://xxxx.supabase.co/functions/v1/ceo-chat
-const AI_KEY = '';   // Supabase anon (public) key
+const AI_URL = 'https://hugsvebdqfmvpleqitym.supabase.co/functions/v1/ceo-chat';
+const AI_KEY = 'sb_publishable_mvBhXP7ZpL5shSWbWJ-lTg_Crdu3-Ha'; // public key, safe in website code
 const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 const MAX_TURNS = 4;
 const SCRIPT = {
