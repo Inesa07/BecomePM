@@ -484,7 +484,11 @@ function intro() {
   const pages = [
     { label:'Что это за игра', html:`<h1 class="serif" style="margin:0;font-weight:500;font-size:clamp(32px,5vw,46px);line-height:1.1">Ты — <span class="it" style="color:var(--amber)">продакт-менеджер</span></h1>
       <p class="lead">Продакт-менеджер решает, <b>что</b> делать в продукте и <b>почему</b>. Он не пишет код и не рисует дизайн — он разбирается, что на самом деле нужно людям, и помогает команде сделать именно это.</p>
-      <p class="lead">В каждом кейсе у компании проблема. Твоя задача — понять, почему она случилась, и предложить решение.</p>` },
+      <p class="lead">В каждом кейсе у компании проблема. Твоя задача — понять, почему она случилась, и предложить решение.</p>
+      <div style="display:flex;flex-direction:column;gap:10px"><span class="label">С тобой во всех кейсах</span><div class="teamgrid" style="max-width:680px">
+        <div class="card person" style="padding:16px">${av('me', 48)}<div><b style="font-weight:600">Ты</b><div style="font-size:13px;color:var(--soft);line-height:1.5">продакт-менеджер. В каждом кейсе — новая компания и новая команда</div></div></div>
+        <div class="card person" style="padding:16px">${av('mentor', 48, 'happy')}<div><b style="font-weight:600">Вера</b><div style="font-size:13px;color:var(--soft);line-height:1.5">твой наставник. Подсказывает по ходу работы и разбирает твою защиту</div></div></div>
+      </div></div>` },
     { label:'Как играть', html:`<h1 class="serif" style="margin:0;font-weight:500;font-size:clamp(30px,4.5vw,42px);line-height:1.1">Всё просто</h1>${howList()}` }
   ];
   const p = pages[st];
@@ -528,26 +532,25 @@ function hub() {
 }
 
 function brief() {
-  const c = C(), st = Math.min(S.step || 0, 2);
+  const c = C(), st = Math.min(S.step || 0, 1);
   const pages = [
-    { label:'Компания', html:`<span class="label" style="color:var(--amber)">Кейс ${c.n} · твой первый день</span>
+    { label:'Компания и команда', html:`<span class="label" style="color:var(--amber)">Кейс ${c.n} · твой первый день</span>
       <h1 class="serif" style="margin:0;font-weight:500;font-size:clamp(32px,5vw,46px);line-height:1.1">Это <span class="it" style="color:var(--amber)">${c.company}</span></h1>
       <p class="lead">${c.about}</p>
       <div class="kpis" style="max-width:640px">${c.kpis.map(([l, v]) => `<div class="card kpi"><span>${l}</span><b>${v}</b></div>`).join('')}</div>
-      <p class="lead">Ты пришла сюда продакт-менеджером. Сначала познакомься с людьми, с которыми будешь работать.</p>` },
-    { label:'Команда', html:`<h1 class="serif" style="margin:0;font-weight:500;font-size:clamp(30px,4.5vw,42px);line-height:1.1">Твоя команда</h1>
-      <div class="teamgrid">${c.crew.concat([['mentor', 'Вера', 'твой наставник. Будет подсказывать по ходу работы']]).map(([id, n, r]) => `<div class="card person" style="padding:16px">${av(id, 48, id === 'mentor' ? 'happy' : 'neutral')}<div><b style="font-weight:600">${n}</b><div style="font-size:13px;color:var(--soft);line-height:1.5">${r}</div></div></div>`).join('')}</div>
-      <p class="lead">Каждый знает что-то своё. Хороший продакт умеет собрать эти кусочки вместе.</p>` },
+      <div style="display:flex;flex-direction:column;gap:10px"><span class="label">С кем ты будешь работать</span>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">${c.crew.map(([id, n, r]) => `<div class="person" title="${esc(r)}" style="border:1px solid var(--line);border-radius:999px;padding:5px 14px 5px 5px">${av(id, 34)}<span style="font-size:14px"><b style="font-weight:600">${n}</b> <span style="color:var(--mute)">· ${r.split('.')[0]}</span></span></div>`).join('')}</div>
+        <span style="font-size:13px;color:var(--mute)">Запоминать не нужно — в кейсе у каждого будет подпись. Вера тоже рядом.</span></div>` },
     { label:'Задача', html:`<div class="person">${av(c.ceo, 56)}<div><b style="font-size:16px;font-weight:600">${c.ceoFull}</b><div style="font-size:13px;color:var(--mute)">CEO · пишет тебе в рабочий чат, 09:12</div></div></div>
       <div class="serif" style="font-size:clamp(17px,2.2vw,20px);line-height:1.7;border-left:1px solid var(--amber);padding-left:20px;max-width:680px">${c.brief}</div>
       <div class="person" style="background:var(--panel2);border-radius:12px;padding:14px 16px;max-width:680px">${av('mentor', 36, 'happy')}<span style="font-size:14px;color:var(--soft)"><b style="color:var(--ink)">Вера:</b> «${c.briefTip}»</span></div>` }
   ];
   const p = pages[st];
   return `<div class="wrap" style="max-width:1000px;min-height:100vh;display:flex;flex-direction:column">
-    <header class="top">${logo()}<span style="font-size:13px;color:var(--mute)">Кейс ${c.n} · ${st + 1} из 3 · ${p.label}</span></header>
+    <header class="top">${logo()}<span style="font-size:13px;color:var(--mute)">Кейс ${c.n} · ${st + 1} из 2 · ${p.label}</span></header>
     <button class="back" data-go="hub">← Все кейсы</button>
     <div class="step" style="padding:clamp(28px,5vw,56px) 0;display:flex;flex-direction:column;gap:22px;flex:1">${p.html}</div>
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;border-top:1px solid var(--line);padding-top:20px;flex-wrap:wrap">${dots(st, 3)}<div style="display:flex;gap:10px">${st ? '<button class="line-btn" data-step="-1">Назад</button>' : ''}${st < 2 ? '<button class="btn" data-step="1">Дальше</button>' : '<button class="btn" data-go="work">Начать работу</button>'}</div></div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;border-top:1px solid var(--line);padding-top:20px;flex-wrap:wrap">${dots(st, 2)}<div style="display:flex;gap:10px">${st ? '<button class="line-btn" data-step="-1">Назад</button>' : ''}${st < 1 ? '<button class="btn" data-step="1">Дальше</button>' : '<button class="btn" data-go="work">Начать работу</button>'}</div></div>
   </div>`;
 }
 
