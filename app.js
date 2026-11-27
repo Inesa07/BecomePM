@@ -518,15 +518,31 @@ function hub() {
       <div style="display:flex;align-items:center;gap:10px"><div style="display:flex">${c.cast.map((x, i) => `<span style="margin-left:${i ? -8 : 0}px;display:flex">${av(x, 30)}</span>`).join('')}</div><span style="font-size:12px;color:var(--mute)">~${c.minutes} минут · навык: ${c.skill}</span></div>
       <button class="${p ? 'line-btn' : 'btn'}" data-case="${c.id}" style="margin-top:auto;text-align:center">${p ? 'Пройти заново' : 'Начать кейс'}</button></div>`;
   };
-  return `<div class="wrap">
+  const day = Math.floor(Date.now() / 864e5), word = GLOSSARY[day % GLOSSARY.length], tip = PRINCIPLES[day % PRINCIPLES.length];
+  const road = LEVELS.map(([xp, name], i) => {
+    const done = i + 1 < lv.n, now = i + 1 === lv.n;
+    return `<li class="${done ? 'rd' : now ? 'rn' : ''}"><i>${done ? '✓' : ''}</i><div><b>${name}</b><small>${now ? `сейчас · ещё ${Math.max(0, lv.to - XP)} опыта до следующего` : done ? 'пройдено' : 'от ' + xp + ' опыта'}</small></div></li>`;
+  }).join('');
+  const side = `<aside class="hubside">
+      <nav class="sidenav" aria-label="Разделы"><button class="on" data-go="hub">Кейсы <small>${played}/${CASES.length}</small></button><button data-lib="glossary">Словарь продакта</button><button data-lib="principles">Мышление продакта</button><button data-lib="stories">Истории продуктов</button></nav>
+      <div class="card sidecard"><div class="person">${av('me', 44)}<div style="flex:1;display:flex;flex-direction:column;gap:6px"><span class="label" style="color:var(--amber)">Уровень ${lv.n}</span><span class="serif" style="font-size:19px">${lv.name}</span></div></div><div class="bar" style="height:4px"><i style="width:${levelPct()}%"></i></div><span style="font-size:12px;color:var(--mute)">${XP} / ${lv.to} опыта</span></div>
+      <div class="card sidecard"><span class="label">Путь продакта</span><ol class="road">${road}</ol></div>
+      <div class="card sidecard"><span class="label" style="color:var(--amber)">Слово дня</span><div><span class="serif" style="font-size:20px">${word.t}</span> <span style="color:var(--mute);font-size:12px">${word.en}</span></div><p>${word.d}</p><button class="navlink" data-lib="glossary" style="padding:0;min-height:0;color:var(--amber)">Весь словарь →</button></div>
+      <div class="card sidecard"><span class="label" style="color:var(--teal)">Совет дня</span><span class="serif" style="font-size:18px;line-height:1.3">${tip.t}</span><p>${tip.d}</p></div>
+    </aside>`;
+  return `<div class="wrap wide">
     ${header()}
+    <div class="hubgrid">
+    ${side}
+    <main style="min-width:0">
     <button class="back" data-go="home">← На главную</button>
-    <section style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:30px 0 28px">
-      <div style="flex:999 1 420px;display:flex;flex-direction:column;gap:12px"><h1 class="serif" style="margin:0;font-weight:500;font-size:clamp(34px,5vw,48px);line-height:1.08">${played ? 'С возвращением.' : 'Готова к первому кейсу?'}</h1><p class="lead">Каждый кейс — история реальной продуктовой проблемы. Кейсы открываются по очереди, как уровни. Пройдено: ${played} из ${CASES.length}.</p></div>
-      <div class="card" style="flex:1 1 300px;padding:20px;display:flex;gap:16px;align-items:center">${av('me', 64)}<div style="flex:1;display:flex;flex-direction:column;gap:8px"><span class="label" style="color:var(--amber)">Уровень ${lv.n}</span><span class="serif" style="font-size:22px">${lv.name}</span><div class="bar" style="height:4px"><i style="width:${levelPct()}%"></i></div><span style="font-size:12px;color:var(--mute)">${XP} / ${lv.to} опыта</span></div></div>
+    <section style="display:flex;flex-direction:column;gap:12px;padding:24px 0 28px">
+      <h1 class="serif" style="margin:0;font-weight:500;font-size:clamp(34px,5vw,48px);line-height:1.08">${played ? 'С возвращением.' : 'Готова к первому кейсу?'}</h1><p class="lead">Каждый кейс — история реальной продуктовой проблемы. Кейсы открываются по очереди, как уровни. Пройдено: ${played} из ${CASES.length}.</p>
     </section>
     <div class="cases">${CASES.map(card).join('')}</div>
-    <div class="card" style="margin-top:20px;padding:22px 26px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap"><div style="display:flex;flex-direction:column;gap:4px"><span class="serif" style="font-size:20px">Хочешь подготовиться?</span><span style="color:var(--soft);font-size:14px">Словарь продакта и логические правила помогут в любом кейсе.</span></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button class="line-btn" data-lib="glossary">Словарь продакта</button><button class="line-btn" data-lib="principles">Мышление продакта</button></div></div>
+    <div class="card" style="margin-top:20px;padding:22px 26px;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap"><div style="display:flex;flex-direction:column;gap:4px"><span class="serif" style="font-size:20px">Скоро новые кейсы</span><span style="color:var(--soft);font-size:14px">А пока — загляни в истории реальных продуктов: как Instagram и Slack нашли успех и почему провалился Quibi.</span></div><button class="line-btn" data-lib="stories">Истории продуктов</button></div>
+    </main>
+    </div>
     ${footer()}
   </div>`;
 }
