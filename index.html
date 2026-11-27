@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Become PM — кейс FitStart</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;1,500&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: calm, elegant, a little cinematic — a night shift at a startup.
+   IDEA: a real product workspace, lit like a late-evening office with windows across the street.
+   PICTURE: the workspace itself; on the home screen, a lit window grid behind an app preview.
+   COLOUR and TYPE: night teal-black, amber light, teal accent, paper cards; Playfair Display + Manrope.
+   LAYOUT: sources left, work center, insights right; stacks into one column on phones. */
+:root{color-scheme:dark;--bg:#0D1416;--bg2:#0F181A;--panel:#121C1F;--panel2:#162225;--line:#233236;--line2:#2C3D41;--ink:#EEF0EC;--soft:#B5C0C1;--mute:#9AA8A9;--amber:#F2B56B;--teal:#5FB3A8;--rose:#E39A8C;--paper:#EFE6D6;--bar:#2B4145}
+:root[data-theme=light],:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 Manrope,system-ui,sans-serif;overflow-x:clip}
+.serif{font-family:'Playfair Display',Georgia,serif}
+.it{font-style:italic}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,a:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.btn{border:0;background:var(--amber);color:#0D1416;padding:13px 24px;border-radius:999px;font-weight:700;min-height:44px}
+.btn:hover{background:#FFC57F}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.ghost{border:1px solid var(--amber);background:transparent;color:var(--amber);padding:10px 18px;border-radius:999px;font-weight:600;min-height:44px}
+.ghost:hover{background:rgba(242,181,107,.08)}
+.done{border:1px solid var(--teal);background:var(--teal);color:#0D1416;padding:10px 18px;border-radius:999px;font-weight:700;min-height:44px}
+.line-btn{border:1px solid var(--line2);background:transparent;padding:9px 15px;border-radius:999px;min-height:42px;text-align:left}
+.line-btn:hover{border-color:var(--mute)}
+.label{font-size:11px;font-weight:600;letter-spacing:.14em;color:var(--mute);text-transform:uppercase}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.wrap{max-width:1180px;margin:0 auto;padding:28px clamp(16px,3vw,28px) 64px}
+.top{display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--line);padding-bottom:18px}
+.logo{display:flex;align-items:center;gap:10px;background:none;border:0;padding:0}
+.logo b{width:30px;height:30px;border-radius:8px;background:var(--amber);color:#0D1416;display:grid;place-items:center;font-family:'Playfair Display',serif;font-size:15px}
+.logo span{font-family:'Playfair Display',serif;font-size:20px;font-weight:600}
+/* home */
+.hero{display:flex;flex-wrap:wrap;gap:56px;align-items:center;padding:56px 0}
+.hero h1{margin:0;font-family:'Playfair Display',serif;font-weight:500;font-size:clamp(42px,6vw,64px);line-height:1.05;text-wrap:balance}
+.hero p{font-size:17px;font-weight:300;line-height:1.7;color:var(--soft);max-width:480px;margin:0}
+.city{position:absolute;right:0;top:0;width:min(330px,70%);height:100%;background:#121C1F;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;padding:30px 22px;align-content:start}
+.city i{height:28px;background:#1A272A}
+.city i.l{background:var(--amber);animation:flick 6s infinite}
+.city i.t{background:var(--teal);opacity:.45}
+@keyframes flick{0%,100%{opacity:.85}50%{opacity:.55}}
+@media (prefers-reduced-motion:reduce){.city i.l,.toast,.ins.new,.step{animation:none!important}}
+.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-top:1px solid var(--line)}
+.steps div{padding:28px 28px 0 0}
+.steps div+div{border-left:1px solid var(--line);padding-left:28px}
+@media(max-width:760px){.steps{grid-template-columns:minmax(0,1fr)}.steps div+div{border-left:0;padding-left:0;border-top:1px solid var(--line)}.steps div{padding-bottom:20px}}
+/* workspace */
+.ws{display:grid;grid-template-columns:232px minmax(0,1fr) 290px;min-height:100vh}
+.side{background:var(--bg2);border-right:1px solid var(--line);padding:20px 14px;display:flex;flex-direction:column;gap:4px}
+.src{display:flex;align-items:center;gap:11px;width:100%;min-height:42px;padding:8px 10px;border-radius:8px;background:transparent;border:1px solid transparent;text-align:left}
+.src:hover{background:#152023}
+.src.on{background:#1A272A;border-color:var(--line2);font-weight:600}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+.src small{margin-left:auto;font-size:12px;color:var(--mute);white-space:nowrap}
+.main{padding:18px clamp(16px,2.4vw,28px) 28px;display:flex;flex-direction:column;gap:16px}
+.aside{background:var(--bg2);border-left:1px solid var(--line);padding:22px 18px;display:flex;flex-direction:column;gap:12px}
+.bar{height:3px;background:var(--line);border-radius:2px;overflow:hidden}
+.bar>i{display:block;height:100%;background:var(--amber);border-radius:2px;transition:width .5s}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.kpi{padding:13px 16px}
+.kpi span{font-size:12px;color:var(--mute)}
+.kpi b{display:block;font-family:'Playfair Display',serif;font-weight:500;font-size:26px}
+.chart{display:flex;align-items:flex-end;gap:12px;height:180px;border-bottom:1px solid var(--line2);padding:0 4px}
+.chart div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:7px;height:100%}
+.chart em{font-style:normal;font-size:12px;color:var(--mute);white-space:nowrap}
+.chart u{display:block;width:100%;background:var(--bar);border-radius:6px 6px 0 0;text-decoration:none}
+.chart .hot u{background:var(--amber);box-shadow:0 0 22px rgba(242,181,107,.3)}
+.chart .hot em{color:#0D1416;background:var(--amber);border-radius:5px;padding:1px 6px;font-weight:700}
+.axis{display:flex;gap:12px;padding:0 4px;font-size:12px;color:var(--mute)}
+.axis span{flex:1;text-align:center}
+.find{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.find .serif{font-size:17px}
+.bubble-q{align-self:flex-end;max-width:78%;background:#233236;border-radius:16px 16px 4px 16px;padding:11px 16px}
+.bubble-a{align-self:flex-start;max-width:78%;border:1px solid var(--line2);border-radius:16px 16px 16px 4px;padding:11px 16px;line-height:1.6}
+.bubble-a.good{border-color:var(--teal)}
+.tip{font-family:'Playfair Display',serif;font-style:italic;font-size:14px;color:var(--amber)}
+.person{display:flex;align-items:center;gap:12px}
+.people{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.pcard{padding:16px;display:flex;flex-direction:column;gap:10px;text-align:left;background:var(--panel2);border:1px solid var(--line);border-radius:12px}
+.pcard:hover{border-color:var(--line2)}
+.pcard.on{border-color:var(--amber)}
+.srcgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr));gap:12px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.row:last-child{border-bottom:0}
+.msg{display:flex;gap:14px;align-items:flex-start}
+.quote{font-family:'Playfair Display',serif;font-style:italic;font-size:18px;line-height:1.55}
+.ins{background:var(--paper);color:#1E1B16;border-radius:4px;padding:12px 14px;display:flex;flex-direction:column;gap:6px;box-shadow:0 10px 22px rgba(0,0,0,.35)}
+.ins.new{animation:glow 2.2s ease-out}
+@keyframes glow{0%{box-shadow:0 0 0 2px var(--amber),0 0 34px rgba(242,181,107,.7);transform:rotate(-1.5deg)}100%{box-shadow:0 10px 22px rgba(0,0,0,.35);transform:none}}
+.tag{align-self:flex-start;font-size:11px;font-weight:700;border-radius:5px;padding:2px 7px}
+.ins .serif{font-style:italic;font-size:15px;line-height:1.45}
+.hyp{display:flex;flex-direction:column;gap:6px;padding:4px 0}
+.hyp small{font-size:12px;color:var(--mute)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9;display:flex;align-items:center;gap:12px;border:1px solid var(--amber);background:#1C2422;border-radius:12px;padding:12px 18px;box-shadow:0 0 30px rgba(242,181,107,.25),0 20px 40px rgba(0,0,0,.5);animation:up .35s ease-out;max-width:calc(100% - 32px)}
+@keyframes up{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
+.nudge{display:flex;gap:12px;align-items:center;border:1px solid var(--line2);background:var(--panel2);border-radius:12px;padding:10px 14px}
+.lead{margin:0;font-size:17px;font-weight:300;line-height:1.75;color:var(--soft);max-width:680px}
+.lead b{color:var(--ink);font-weight:600}
+.how{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.how .card{padding:20px;display:flex;flex-direction:column;gap:8px}
+.how .card span:last-child{font-size:14px;color:var(--soft);line-height:1.6}
+.teamgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:12px}
+.step{animation:fadeIn .4s ease-out}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media(max-width:760px){.how{grid-template-columns:minmax(0,1fr)}}
+.modal-bg{position:fixed;inset:0;z-index:20;background:rgba(5,9,10,.72);display:grid;place-items:center;padding:16px;animation:fadeIn .25s ease-out}
+.modal{position:relative;width:min(420px,100%);padding:28px;display:flex;flex-direction:column;gap:16px;background:var(--panel);border-color:var(--line2);box-shadow:0 40px 80px rgba(0,0,0,.6)}
+input:focus{outline:2px solid var(--amber);outline-offset:1px}
+/* decision */
+.opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;padding:14px 16px;border-radius:12px;border:1px solid var(--line);background:var(--panel)}
+.opt:hover{border-color:var(--line2)}
+.opt.on{border-color:var(--amber);background:#1A2422}
+.opt i{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--mute);flex:none;margin-top:3px}
+.opt.on i{border-color:var(--amber);background:radial-gradient(var(--amber) 45%,transparent 50%)}
+.opt.sq i{border-radius:4px}
+.opt.sq.on i{background:var(--amber)}
+/* result */
+.grade{width:118px;height:118px;border-radius:50%;border:1px solid var(--amber);display:grid;place-items:center;font-family:'Playfair Display',serif;font-size:56px;color:var(--amber);box-shadow:0 0 50px rgba(242,181,107,.3);flex:none}
+.conf{position:absolute;width:9px;height:4px;border-radius:1px}
+.check{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}
+@media(max-width:1060px){
+ .ws{grid-template-columns:minmax(0,1fr)}
+ .side{border-right:0;border-bottom:1px solid var(--line);flex-direction:row;flex-wrap:nowrap;overflow-x:auto;padding:12px;gap:8px;align-items:center}
+ .side .hide-m{display:none}
+ .src{width:auto;flex:none;border-color:var(--line)}
+ .aside{border-left:0;border-top:1px solid var(--line)}
+}
+@media(max-width:640px){
+ .kpis{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ .kpis .kpi:last-child{grid-column:1/-1}
+ .people{grid-template-columns:minmax(0,1fr)}
+ .chart{gap:6px;height:150px}.axis{gap:6px}
+ .chart em{font-size:10px}
+ .bubble-q,.bubble-a{max-width:92%}
+}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+{
+/* ---------- avatars ---------- */
+const HAIR = {
+  long: [c => `<path d="M11 24c0-9 5-14 11-14s11 5 11 14v8h-4v-9H15v9h-4z" fill="${c}"/>`, c => `<path d="M14 19c2-6 14-7 16 0-4-2-11-3-16 0z" fill="${c}"/>`],
+  short: [() => '', c => `<path d="M14 19c0-6 4-8 8-8s8 2 8 8c-3-3-13-3-16 0z" fill="${c}"/>`],
+  curly: [() => '', c => `<circle cx="16" cy="15" r="3.5" fill="${c}"/><circle cx="20" cy="12.5" r="3.5" fill="${c}"/><circle cx="24.5" cy="12.5" r="3.5" fill="${c}"/><circle cx="28" cy="15.5" r="3.5" fill="${c}"/>`],
+  bun: [c => `<circle cx="22" cy="10.5" r="4.2" fill="${c}"/>`, c => `<path d="M14 20c0-6 4-8.5 8-8.5s8 2.5 8 8.5c-3-4-13-4-16 0z" fill="${c}"/>`],
+  bob: [c => `<path d="M13 23c0-8 4-12 9-12s9 4 9 12v5h-3v-7H16v7h-3z" fill="${c}"/>`, c => `<path d="M14 19c2-5 14-6 16 0-5-2-11-2-16 0z" fill="${c}"/>`]
+};
+const PEOPLE = {
+  me:    { bg:'#F6E2C2', shirt:'#F2B56B', skin:'#F1C7A6', hair:'#3B2A22', style:'long' },
+  anna:  { bg:'#D3ECE8', shirt:'#5FB3A8', skin:'#F1C7A6', hair:'#8A4B2F', style:'long', name:'Анна' },
+  sveta: { bg:'#EDE4D0', shirt:'#B89B6A', skin:'#F3D2B5', hair:'#C9A15A', style:'bob', name:'Света' },
+  mark:  { bg:'#D9E4DC', shirt:'#4F7A62', skin:'#C99372', hair:'#1E1B16', style:'short', name:'Марк' },
+  max:   { bg:'#E7DFF3', shirt:'#7C67A8', skin:'#E9B894', hair:'#2D2A32', style:'short', glasses:true, name:'Максим' },
+  lesha: { bg:'#DCE9F4', shirt:'#6E9CC2', skin:'#F0C9A6', hair:'#6B4A32', style:'curly', name:'Лёша' },
+  mentor:{ bg:'#DCEDE6', shirt:'#2F5D55', skin:'#EBC3A2', hair:'#9A9A9A', style:'bun', name:'Вера' },
+  dina:  { bg:'#F6E2C2', shirt:'#C99A4E', skin:'#A97A5C', hair:'#1E1B16', style:'bob', name:'Дина' },
+  ira:   { bg:'#F4DAD4', shirt:'#D07D6E', skin:'#C99372', hair:'#2D2A32', style:'bun', name:'Ира' }
+};
+function av(id, size = 40, mood = 'neutral') {
+  const p = PEOPLE[id], h = HAIR[p.style];
+  const eyes = mood === 'happy'
+    ? '<path d="M17.8 22q1.2-1.4 2.4 0M23.8 22q1.2-1.4 2.4 0" stroke="#1E1B16" stroke-width="1" fill="none" stroke-linecap="round"/>'
+    : '<circle cx="19" cy="22" r="1" fill="#1E1B16"/><circle cx="25" cy="22" r="1" fill="#1E1B16"/>';
+  const mouth = { neutral:'M19 25.5q3 2.5 6 0', sad:'M19.5 26.5q2.5-1.5 5 0', happy:'M18.5 25q3.5 3.5 7 0' }[mood];
+  const glasses = p.glasses ? '<circle cx="19" cy="22" r="2.4" fill="none" stroke="#2D2A32" stroke-width=".9"/><circle cx="25" cy="22" r="2.4" fill="none" stroke="#2D2A32" stroke-width=".9"/><path d="M21.4 22h1.2" stroke="#2D2A32" stroke-width=".9"/>' : '';
+  return `<svg width="${size}" height="${size}" viewBox="0 0 44 44" role="img" aria-label="${p.name || 'Ты'}" style="flex:none"><circle cx="22" cy="22" r="22" fill="${p.bg}"/><path d="M8 44c2-9 8-13 14-13s12 4 14 13z" fill="${p.shirt}"/>${h[0](p.hair)}<circle cx="22" cy="21" r="8" fill="${p.skin}"/>${h[1](p.hair)}${eyes}${glasses}<path d="${mouth}" stroke="#1E1B16" stroke-width="1.05" fill="none" stroke-linecap="round"/></svg>`;
+}
+const SPARK = '<svg width="20" height="20" viewBox="0 0 24 24" fill="#F2B56B" aria-hidden="true"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>';
+
+/* ---------- case content ---------- */
+const MAX_DAY = 20;
+const SOURCES = [
+  { id:'overview', label:'Обзор', cost:0, color:'#EEF0EC', tag:['#E5E5E5','#333'], title:'Твой рабочий стол', sub:'' },
+  { id:'analytics', label:'Аналитика', cost:1, color:'#F2B56B', tag:['#F6E2C2','#6B4614'], title:'Удержание новых пользователей', sub:'Удержание (retention) — доля новичков, которые продолжают открывать приложение.' },
+  { id:'users', label:'Интервью', cost:0, color:'#5FB3A8', tag:['#D3ECE8','#1E5A52'], title:'Интервью с пользователями', sub:'Каждый разговор занимает 1 день. От того, как ты спрашиваешь, зависит, что ты узнаешь.' },
+  { id:'support', label:'Поддержка', cost:1, color:'#E39A8C', tag:['#F4DAD4','#7A3426'], title:'Обращения в поддержку', sub:'Что пользователи писали за последний месяц. Самое громкое — не всегда самое важное.' },
+  { id:'team', label:'Команда', cost:1, color:'#9FC7E6', tag:['#DCE9F4','#264B6B'], title:'Рабочий чат команды', sub:'Разработчики и аналитик знают то, чего нет в отчётах.' },
+  { id:'ceo', label:'CEO', cost:0, color:'#C9B6E4', tag:['#E7DFF3','#4A3470'], title:'Сообщение от CEO', sub:'Мнение руководителя важно учесть, но это ещё не факт.' }
+];
+const BLURB = { analytics:['Цифры: что происходит и когда', '1 день'], users:['Разговоры с людьми: почему они уходят', '1 день за разговор'], support:['Жалобы и просьбы пользователей', '1 день'], team:['Что недавно менялось в продукте', '1 день'], ceo:['Мнение руководителя', 'бесплатно'] };
+const SRC = Object.fromEntries(SOURCES.map(s => [s.id, s]));
+const HYPS = [
+  { id:'hard', title:'Сложный старт для новичков' },
+  { id:'social', title:'Не хватает соцфункций' },
+  { id:'dark', title:'Нужна тёмная тема' }
+];
+// insight: text, source, hypothesis, sign (+ supports / - contradicts), key = important for the real cause
+const INS = {
+  drop:     { text:'Обрыв удержания между 3-м и 4-м днём', src:'analytics', hyp:'hard', s:1, key:true },
+  sept:     { text:'Падение началось в сентябре — раньше удержание было 38%', src:'analytics', hyp:'hard', s:1, key:true },
+  anna:     { text:'Анна: «На 10-й минуте поняла, что не вытяну. Стало стыдно»', src:'users', hyp:'hard', s:1, key:true },
+  sveta:    { text:'Света: «35 минут прыжков. Выключила на середине»', src:'users', hyp:'hard', s:1, key:true },
+  svetaF:   { text:'Света: «С подругой было бы классно»', src:'users', hyp:'social', s:1 },
+  markDark: { text:'Марк: «Хочу тёмную тему, вечером режет глаза»', src:'users', hyp:'dark', s:1 },
+  markSolo: { text:'Марк тренируется один уже 8 месяцев — ему так удобнее', src:'users', hyp:'social', s:-1 },
+  dark:     { text:'14 просьб о тёмной теме — от активных пользователей', src:'support', hyp:'dark', s:1 },
+  hardSup:  { text:'9 жалоб новичков: первая тренировка слишком тяжёлая', src:'support', hyp:'hard', s:1, key:true },
+  team35:   { text:'В сентябре первую тренировку удлинили с 15 до 35 минут', src:'team', hyp:'hard', s:1, key:true },
+  dina:     { text:'Кто закончил первую тренировку — остаётся в 2 раза чаще', src:'team', hyp:'hard', s:1, key:true },
+  ceo:      { text:'CEO уверен: людям скучно тренироваться одним', src:'ceo', hyp:'social', s:1 }
+};
+const INTERVIEWS = {
+  anna: { who:'Анна, 29 лет', note:'ушла на 4-й день', mood:'sad', qs:[
+    { q:'Вам нравилось наше приложение?', a:'Да, нормальное. Красивое.', tip:'Вопрос о мнении — вежливый ответ ничего не объясняет.' },
+    { q:'Расскажите про последний раз, когда вы открывали приложение.', a:'Открыла первую тренировку… На 10-й минуте поняла, что не вытяну. Стало стыдно, и больше я не заходила.', ins:'anna' },
+    { q:'Вы бы занимались больше, если бы там были друзья?', a:'Ну… наверное, да. Звучит весело.', tip:'Вопрос о будущем: люди легко говорят «да», но это не значит, что так и будет.' }
+  ]},
+  sveta: { who:'Света, 34 года', note:'ушла на 2-й день', mood:'neutral', qs:[
+    { q:'Почему вы перестали заниматься?', a:'Да как-то времени не было…', tip:'Прямое «почему» часто даёт вежливую отговорку вместо причины.' },
+    { q:'Что вы делали в приложении в первый день?', a:'Выбрала программу для новичков, включила первую тренировку. Там было 35 минут прыжков. Я выключила на середине.', ins:'sveta' },
+    { q:'Хотели бы вы тренироваться с подругой?', a:'О, да, было бы классно!', tip:'Наводящий вопрос: ты подсказала ответ. Это мнение, а не поведение.', ins:'svetaF' }
+  ]},
+  mark: { who:'Марк, 41 год', note:'активный, занимается 8 месяцев', mood:'happy', qs:[
+    { q:'Чего вам не хватает в приложении?', a:'Тёмной темы! Вечером экран прямо режет глаза.', tip:'Реальная просьба — но Марк не уходит. Это про удобство, а не про отток.', ins:'markDark' },
+    { q:'Как прошла ваша первая неделя?', a:'Я до этого ходил в зал, так что нормально. Хотя первая тренировка даже меня утомила, честно.', ins:null, extra:'Даже опытного пользователя первая тренировка утомила.' },
+    { q:'Вы тренируетесь с кем-то или один?', a:'Один. Мне так удобнее — включил и занимаешься, когда хочешь.', ins:'markSolo' }
+  ]}
+};
+const CAUSES = HYPS;
+const FIXES = [
+  { id:'short', hyp:'hard', title:'Вернуть короткую первую тренировку (15 минут) и мягкий старт', note:'1 спринт' },
+  { id:'push', hyp:'hard', title:'Отправлять новичкам мотивирующие напоминания на 3-й день', note:'несколько дней' },
+  { id:'social', hyp:'social', title:'Построить соцсеть: друзья, лента, лайки', note:'3 спринта' },
+  { id:'dark', hyp:'dark', title:'Сделать тёмную тему', note:'1 спринт' }
+];
+
+/* ---------- state ---------- */
+const fresh = () => ({ view:'home', day:1, src:'overview', opened:{}, talked:{}, person:'anna', asked:{}, ins:[], last:null, xp:0, cause:null, fix:null, ev:[], result:null, warn:'', step:0, hidden:{}, auth:null });
+let S = fresh();
+let best = null;
+try { best = localStorage.getItem('becomepm-best'); } catch (e) {}
+
+const app = document.getElementById('app');
+const go = v => { S.view = v; S.last = null; render(); window.scrollTo(0, 0); };
+const xpLevel = () => {
+  const total = S.xp;
+  if (total >= 150) return { n:2, name:'Младший продакт', from:150, to:300 };
+  return { n:1, name:'Стажёр', from:0, to:150 };
+};
+const supportOf = h => {
+  let pro = 0, con = 0;
+  S.ins.forEach(k => { if (INS[k].hyp === h) { INS[k].s > 0 ? pro++ : con++; } });
+  return { pro, con };
+};
+const daysLeft = () => MAX_DAY - S.day;
+
+/* ---------- actions ---------- */
+function openSource(id) {
+  const s = SRC[id];
+  if (!S.opened[id]) {
+    if (s.cost > daysLeft()) { S.warn = 'Не хватает дней, чтобы открыть этот источник. Пора принимать решение.'; render(); return; }
+    S.day += s.cost; S.opened[id] = true;
+  }
+  S.src = id; S.warn = ''; S.last = null; render();
+}
+function talk(id) {
+  if (!S.talked[id]) {
+    if (daysLeft() < 1) { S.warn = 'Не хватает дней на новое интервью. Пора принимать решение.'; render(); return; }
+    S.day += 1; S.talked[id] = true;
+  }
+  S.person = id; S.warn = ''; S.last = null; render();
+}
+function ask(pid, i) { S.asked[pid + i] = true; S.last = null; render(); }
+function save(k) {
+  if (S.ins.includes(k)) { S.ins = S.ins.filter(x => x !== k); S.last = null; S.xp = Math.max(0, S.xp - 10); }
+  else { S.ins.push(k); S.last = k; S.xp += 10; }
+  render();
+}
+
+/* ---------- small renderers ---------- */
+const saveBtn = (k, label = '+ Сохранить инсайт') => S.ins.includes(k)
+  ? `<button class="done" data-save="${k}">✓ Сохранено</button>`
+  : `<button class="ghost" data-save="${k}">${label}</button>`;
+
+function topBar() {
+  const lv = xpLevel(), pct = Math.min(100, Math.round((S.xp - lv.from) / (lv.to - lv.from) * 100));
+  return `<div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap">
+    <div style="display:flex;flex-direction:column;gap:3px"><span style="font-size:12px;color:var(--mute)">Кейс 1 · FitStart</span><span class="serif" style="font-size:20px">Почему уходят пользователи?</span></div>
+    <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <div style="display:flex;flex-direction:column;gap:6px;min-width:130px"><span style="font-size:12px;color:var(--mute)">День <b style="color:var(--ink)">${S.day}</b> из ${MAX_DAY}</span><div class="bar"><i style="width:${S.day / MAX_DAY * 100}%"></i></div></div>
+      <div style="display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:999px;padding:5px 14px 5px 5px">${av('me', 28)}<div style="display:flex;flex-direction:column;gap:4px"><span style="font-size:12px"><b>Ур. ${lv.n}</b> <span style="color:var(--mute)">· ${lv.name}</span></span><div class="bar" style="width:110px"><i style="width:${pct}%"></i></div></div></div>
+      <button class="${S.ins.length >= 2 ? 'btn' : 'ghost'}" data-go="decide">Принять решение</button>
+    </div>
+  </div>`;
+}
+
+function sourceView() {
+  const s = SRC[S.src];
+  let body = '';
+  if (S.src === 'overview') {
+    return `<section class="card" style="padding:clamp(20px,3vw,30px);display:flex;flex-direction:column;gap:22px;flex:1">
+      <div style="display:flex;flex-direction:column;gap:8px"><span class="label" style="color:var(--amber)">День ${S.day} · обзор</span><h2 class="serif" style="margin:0;font-weight:500;font-size:clamp(26px,3.5vw,32px)">С чего начнём?</h2><p class="lead" style="font-size:16px">Новые пользователи перестают заниматься. За два месяца удержание упало с 38% до 26%. Нужно понять почему.</p></div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap">
+        <div style="flex:1 1 200px;background:var(--panel2);border-radius:12px;padding:16px 18px"><span style="font-size:12px;color:var(--mute)">Удержание на 7-й день</span><div class="serif" style="font-size:28px">26% <span style="font-family:Manrope;font-size:13px;color:var(--rose)">было 38%</span></div></div>
+        <div style="flex:1 1 200px;background:var(--panel2);border-radius:12px;padding:16px 18px"><span style="font-size:12px;color:var(--mute)">Времени на решение</span><div class="serif" style="font-size:28px">${daysLeft()} <span style="font-family:Manrope;font-size:13px;color:var(--mute)">рабочих дней</span></div></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px"><span class="label">Где искать ответы</span>
+        <div class="srcgrid">${SOURCES.filter(x => x.id !== 'overview').map(x => `<button class="pcard" data-src="${x.id}" style="gap:6px"><span style="display:flex;align-items:center;gap:10px"><span class="dot" style="background:${x.color};width:9px;height:9px"></span><b style="font-weight:600;font-size:16px">${x.label}</b></span><span style="font-size:14px;color:var(--soft)">${BLURB[x.id][0]}</span><span style="font-size:12px;color:${S.opened[x.id] ? 'var(--teal)' : 'var(--amber)'}">${S.opened[x.id] ? 'уже открыто' : BLURB[x.id][1]}</span></button>`).join('')}</div>
+      </div>
+    </section>`;
+  }
+  if (S.src === 'analytics') {
+    const days = [100, 72, 64, 31, 28, 27, 26];
+    const months = [['Июль', 38], ['Август', 37], ['Сентябрь', 27], ['Октябрь', 26]];
+    body = `<div class="chart" role="img" aria-label="Удержание по дням: ${days.join(', ')} процентов">${days.map((v, i) => `<div class="${i === 3 ? 'hot' : ''}"><em>${i === 3 ? '−52%' : v + '%'}</em><u style="height:${v * .86}%"></u></div>`).join('')}</div>
+      <div class="axis">${days.map((_, i) => `<span>Д${i + 1}</span>`).join('')}</div>
+      <div class="find"><span class="serif it">Между 3-м и 4-м днём уходит половина оставшихся.</span>${saveBtn('drop')}</div>
+      <div style="border-top:1px solid var(--line);padding-top:18px;display:flex;flex-direction:column;gap:12px">
+        <span style="font-weight:600">Удержание на 7-й день по месяцам</span>
+        <div class="chart" style="height:130px" role="img" aria-label="Удержание D7: июль 38%, август 37%, сентябрь 27%, октябрь 26%">${months.map(([m, v], i) => `<div class="${i === 2 ? 'hot' : ''}"><em>${v}%</em><u style="height:${v * 2}%"></u></div>`).join('')}</div>
+        <div class="axis">${months.map(([m]) => `<span>${m}</span>`).join('')}</div>
+        <div class="find"><span class="serif it">До сентября удержание держалось на 38%. Что-то случилось в сентябре.</span>${saveBtn('sept')}</div>
+      </div>`;
+  }
+  if (S.src === 'users') {
+    const ids = ['anna', 'sveta', 'mark'];
+    body = `<div class="people">${ids.map(id => { const iv = INTERVIEWS[id]; return `<button class="pcard ${S.person === id && S.talked[id] ? 'on' : ''}" data-talk="${id}"><div class="person">${av(id, 40, iv.mood)}<div style="display:flex;flex-direction:column"><b style="font-weight:600">${iv.who}</b><span style="font-size:12px;color:var(--mute)">${iv.note}</span></div></div><span style="font-size:12px;color:${S.talked[id] ? 'var(--teal)' : 'var(--amber)'}">${S.talked[id] ? 'разговор открыт' : 'поговорить · 1 день'}</span></button>`; }).join('')}</div>`;
+    if (S.talked[S.person]) {
+      const iv = INTERVIEWS[S.person];
+      const chat = iv.qs.map((q, i) => S.asked[S.person + i] ? `<div class="bubble-q">${q.q}</div><div class="bubble-a ${q.ins && !q.tip ? 'good' : ''}">${q.a}</div>${q.tip ? `<span class="tip">${q.tip}</span>` : ''}${q.extra ? `<span class="tip" style="color:var(--teal)">${q.extra}</span>` : ''}${q.ins ? `<div>${saveBtn(q.ins)}</div>` : ''}` : '').join('');
+      const left = iv.qs.map((q, i) => S.asked[S.person + i] ? '' : `<button class="line-btn" data-ask="${S.person}|${i}">${q.q}</button>`).join('');
+      body += `<div style="border-top:1px solid var(--line);padding-top:16px;display:flex;flex-direction:column;gap:12px">
+        <div class="person">${av(S.person, 48, iv.mood)}<div><b style="font-weight:600">${iv.who}</b><div style="font-size:12px;color:var(--mute)">${iv.note}</div></div></div>
+        ${chat || '<span style="color:var(--mute)">Выбери, с какого вопроса начать.</span>'}
+        ${left ? `<div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px"><span class="label">Спросить</span><div style="display:flex;gap:8px;flex-wrap:wrap">${left}</div></div>` : ''}
+      </div>`;
+    } else {
+      body += `<p class="serif it" style="color:var(--mute);margin:0">Выбери, с кем поговорить. Каждый разговор занимает один рабочий день.</p>`;
+    }
+  }
+  if (S.src === 'support') {
+    body = `<div class="person">${av('ira', 44)}<span class="quote" style="font-size:16px">Ира: «Вот что нам писали за месяц»</span></div>
+      <div><div class="row"><div><div class="serif" style="font-size:18px">«Сделайте тёмную тему!»</div><div style="font-size:13px;color:var(--mute)">14 обращений · в основном активные пользователи</div></div>${saveBtn('dark', '+ Инсайт')}</div>
+      <div class="row"><div><div class="serif" style="font-size:18px">«Первая тренировка — это ад»</div><div style="font-size:13px;color:var(--mute)">9 обращений · все от новых пользователей</div></div>${saveBtn('hardSup', '+ Инсайт')}</div>
+      <div class="row"><div><div class="serif" style="font-size:18px;color:var(--soft)">«Не синхронизируется с часами»</div><div style="font-size:13px;color:var(--mute)">3 обращения · уже исправлено</div></div><span style="font-size:13px;color:var(--mute)">редкий случай</span></div></div>`;
+  }
+  if (S.src === 'team') {
+    body = `<div class="msg">${av('lesha', 46)}<div style="display:flex;flex-direction:column;gap:6px"><span><b>Лёша</b> <span style="color:var(--mute);font-size:12px">разработчик · 11:05</span></span><span class="quote">«Кстати, в начале сентября мы переделали первую тренировку — сделали 35 минут вместо 15, чтобы была “настоящая”. Это была идея маркетинга.»</span><div>${saveBtn('team35')}</div></div></div>
+      <div class="msg" style="border-top:1px solid var(--line);padding-top:16px">${av('dina', 46)}<div style="display:flex;flex-direction:column;gap:6px"><span><b>Дина</b> <span style="color:var(--mute);font-size:12px">аналитик · 11:20</span></span><span class="quote">«Я посчитала: те, кто дошёл до конца первой тренировки, на 7-й день остаются в два раза чаще.»</span><div>${saveBtn('dina')}</div></div></div>`;
+  }
+  if (S.src === 'ceo') {
+    body = `<div class="msg">${av('max', 48)}<div style="display:flex;flex-direction:column;gap:6px"><span><b>Максим</b> <span style="color:var(--mute);font-size:12px">CEO · 10:42</span></span><span class="quote">«Людям скучно тренироваться одним. Strava выросла на соцфункциях — нам нужно то же самое. Когда начнём?»</span><div>${saveBtn('ceo', '+ Сохранить как мнение')}</div></div></div>`;
+  }
+  return `<section class="card" style="padding:22px;display:flex;flex-direction:column;gap:16px;flex:1">
+    <div><div class="serif" style="font-size:24px">${s.title}</div><div style="font-size:13px;font-weight:300;color:var(--soft)">${s.sub}</div></div>${body}</section>`;
+}
+
+function insightsPanel() {
+  const cards = S.ins.map(k => { const i = INS[k], s = SRC[i.src]; return `<div class="ins ${k === S.last ? 'new' : ''}"><span class="tag" style="background:${s.tag[0]};color:${s.tag[1]}">${s.label}</span><span class="serif">${i.text}</span></div>`; }).join('');
+  const hyps = HYPS.map(h => { const { pro, con } = supportOf(h.id); const strong = pro >= 3 && con === 0; return `<div class="hyp"><div style="display:flex;justify-content:space-between;gap:8px"><span>${h.title}</span><span class="serif" style="color:var(--amber)">${pro}</span></div><div class="bar"><i style="width:${Math.min(100, pro * 20)}%;background:${strong ? 'var(--teal)' : 'var(--amber)'}"></i></div><small>за: ${pro}${con ? ` · против: ${con}` : ''}${strong ? ' · <span style="color:var(--teal)">сильная гипотеза</span>' : ''}</small></div>`; }).join('');
+  return `<span class="label">Инсайты · ${S.ins.length}</span>
+    ${cards || '<p class="serif it" style="margin:0;color:var(--mute);font-size:15px;line-height:1.55">Сохраняй важное из источников — инсайты появятся здесь.</p>'}
+    <span class="label" style="margin-top:14px">Гипотезы</span>${S.ins.length ? hyps : '<p style="margin:0;font-size:13px;color:var(--mute);line-height:1.6">Гипотезы — возможные причины проблемы. Они появятся, когда ты соберёшь первые инсайты.</p>'}`;
+}
+
+/* ---------- views ---------- */
+function home() {
+  const windows = Array.from({ length: 45 }, (_, i) => `<i class="${[1, 7, 10, 14, 22, 25, 34, 38, 41].includes(i) ? 'l' : [4, 16, 28].includes(i) ? 't' : ''}" style="${[1, 7, 10, 14, 22, 25, 34, 38, 41].includes(i) ? `opacity:${.35 + (i % 5) * .12};animation-delay:${i * .37}s` : ''}"></i>`).join('');
+  return `<div class="wrap">
+    <header class="top"><button class="logo" data-go="home"><b>B</b><span>Become PM</span></button><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="line-btn" data-auth="login" style="font-size:14px;min-height:40px">Войти</button><button class="btn" data-auth="signup" style="padding:9px 18px;min-height:40px;font-size:14px">Регистрация</button></div></header>
+    <section class="hero">
+      <div style="flex:1 1 420px;display:flex;flex-direction:column;gap:24px">
+        <span style="font-size:13px;color:var(--amber);font-weight:600">Игра-симулятор для тех, кто хочет стать продакт-менеджером</span>
+        <h1>Метрики падают.<br><span class="it" style="color:var(--amber)">Найди причину.</span></h1>
+        <p>Ты — новый продакт-менеджер. Говори с пользователями, читай данные, проверяй гипотезы и принимай решение, которое изменит продукт.</p>
+        <div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap"><button class="btn" data-go="start" style="font-size:16px;padding:15px 28px">Сыграть первый кейс</button><span style="font-size:13px;color:var(--mute)">${best ? `Твой лучший результат: <b style="color:var(--amber)">${best}</b>` : 'Без регистрации · около 15 минут'}</span></div>
+      </div>
+      <div style="flex:1 1 420px;position:relative;height:440px">
+        <div class="city" aria-hidden="true">${windows}</div>
+        <div class="card" style="position:absolute;left:0;top:60px;width:min(330px,88%);background:var(--panel2);border-color:var(--line2);padding:20px;display:flex;flex-direction:column;gap:14px;box-shadow:0 30px 60px rgba(0,0,0,.5)">
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:12px;color:var(--mute)">FitStart · удержание D7</span><span style="font-size:13px;color:var(--rose)">−30%</span></div>
+          <span class="serif" style="font-size:30px">26%</span>
+          <div style="display:flex;align-items:flex-end;gap:8px;height:80px;border-bottom:1px solid var(--line2)" aria-hidden="true">${[100, 72, 64, 31, 28, 26].map((v, i) => `<i style="flex:1;height:${v}%;background:${i === 3 ? 'var(--amber)' : 'var(--bar)'};border-radius:4px 4px 0 0"></i>`).join('')}</div>
+        </div>
+        <div style="position:absolute;left:min(230px,40%);top:300px;width:210px;background:var(--paper);color:#1E1B16;border-radius:3px;padding:16px 18px;transform:rotate(-2deg);box-shadow:0 18px 36px rgba(0,0,0,.5)"><span class="serif it" style="font-size:17px;line-height:1.4">«На 10-й минуте поняла, что не вытяну»</span><div style="font-size:11px;letter-spacing:.14em;margin-top:10px;color:#6B6457">ИНСАЙТ · ИНТЕРВЬЮ</div></div>
+      </div>
+    </section>
+    <section class="steps">
+      <div><span class="serif it" style="font-size:26px;color:var(--amber)">I</span><div class="serif" style="font-size:21px;margin:6px 0">Собирай инсайты</div><p style="margin:0;font-weight:300;color:var(--soft)">Данные, интервью, поддержка и команда — в одном рабочем пространстве.</p></div>
+      <div><span class="serif it" style="font-size:26px;color:var(--amber)">II</span><div class="serif" style="font-size:21px;margin:6px 0">Проверяй гипотезы</div><p style="margin:0;font-weight:300;color:var(--soft)">Самое громкое мнение — не всегда правильное. Опирайся на факты.</p></div>
+      <div><span class="serif it" style="font-size:26px;color:var(--amber)">III</span><div class="serif" style="font-size:21px;margin:6px 0">Принимай решение</div><p style="margin:0;font-weight:300;color:var(--soft)">У тебя 20 рабочих дней. Каждое действие стоит времени.</p></div>
+    </section>
+  </div>`;
+}
+
+function brief() {
+  const idx = S.view === 'intro' ? [0, 1] : [2, 3, 4];
+  const st = Math.min(S.step || 0, idx.length - 1), TOTAL = idx.length;
+  const dots = Array.from({ length: TOTAL }, (_, i) => `<i style="width:${i === st ? 26 : 8}px;height:8px;border-radius:4px;background:${i <= st ? 'var(--amber)' : 'var(--line2)'};transition:width .3s"></i>`).join('');
+  const team = [['max', 'Максим', 'CEO, основатель. Решает, куда идёт компания', 'neutral'], ['lesha', 'Лёша', 'разработчик. Знает, что и когда менялось в приложении', 'neutral'], ['ira', 'Ира', 'поддержка. Читает все письма и жалобы пользователей', 'neutral'], ['dina', 'Дина', 'аналитик. Считает метрики и строит графики', 'neutral'], ['mentor', 'Вера', 'твой наставник. Будет подсказывать по ходу работы', 'happy']];
+  const steps = [
+    { label:'Что это за игра', html:`
+      <h1 class="serif" style="margin:0;font-weight:500;font-size:clamp(32px,5vw,46px);line-height:1.1">Ты — <span class="it" style="color:var(--amber)">продакт-менеджер</span></h1>
+      <p class="lead">Продакт-менеджер (product manager) решает, <b>что</b> делать в продукте и <b>почему</b>. Он не пишет код и не рисует дизайн — он разбирается, что на самом деле нужно людям, и помогает команде сделать именно это.</p>
+      <p class="lead">В этой игре ты получишь настоящую продуктовую задачу. Правильного ответа никто не подскажет — его нужно найти.</p>` },
+    { label:'Как играть', html:`
+      <h1 class="serif" style="margin:0;font-weight:500;font-size:clamp(30px,4.5vw,42px);line-height:1.1">Как устроена работа</h1>
+      <div class="how">
+        <div class="card"><span class="serif it" style="color:var(--amber);font-size:24px">I</span><b>Изучай источники</b><span>Данные, разговоры с пользователями, поддержка, команда. Каждое действие тратит рабочие дни — их всего ${MAX_DAY}.</span></div>
+        <div class="card"><span class="serif it" style="color:var(--amber);font-size:24px">II</span><b>Сохраняй инсайты</b><span>Инсайт (insight) — важное открытие. Каждый инсайт поддерживает одну из гипотез — возможных причин проблемы.</span></div>
+        <div class="card"><span class="serif it" style="color:var(--amber);font-size:24px">III</span><b>Прими решение</b><span>Назови причину, выбери, что делать, и докажи это инсайтами. Потом увидишь, к чему оно привело.</span></div>
+      </div>` },
+    { label:'Компания', html:`
+      <span class="label" style="color:var(--amber)">Твой первый день</span>
+      <h1 class="serif" style="margin:0;font-weight:500;font-size:clamp(32px,5vw,46px);line-height:1.1">Это <span class="it" style="color:var(--amber)">FitStart</span></h1>
+      <p class="lead">Мобильное приложение с домашними тренировками для новичков. Люди скачивают его, выбирают программу и занимаются дома, без зала и тренера.</p>
+      <div class="kpis" style="max-width:640px"><div class="card kpi"><span>Пользователей</span><b>48 000</b></div><div class="card kpi"><span>Новых за месяц</span><b>6 120</b></div><div class="card kpi"><span>Команда</span><b>12 человек</b></div></div>
+      <p class="lead">Ты пришла в команду новым продакт-менеджером. Сначала познакомься с людьми, с которыми будешь работать.</p>` },
+    { label:'Команда', html:`
+      <h1 class="serif" style="margin:0;font-weight:500;font-size:clamp(30px,4.5vw,42px);line-height:1.1">Твоя команда</h1>
+      <div class="teamgrid">${team.map(([id, n, r, m]) => `<div class="card person" style="padding:16px">${av(id, 48, m)}<div><b style="font-weight:600">${n}</b><div style="font-size:13px;color:var(--soft);line-height:1.5">${r}</div></div></div>`).join('')}</div>
+      <p class="lead">Каждый из них знает что-то своё. Хороший продакт умеет собрать эти кусочки вместе.</p>` },
+    { label:'Задача', html:`
+      <div class="person">${av('max', 56)}<div><b style="font-size:16px;font-weight:600">Максим Ковалёв</b><div style="font-size:13px;color:var(--mute)">CEO · пишет тебе в рабочий чат, 09:12</div></div></div>
+      <div class="serif" style="font-size:clamp(17px,2.2vw,20px);line-height:1.7;border-left:1px solid var(--amber);padding-left:20px;max-width:680px">Привет! Рад, что ты с нами.<br><br>У нас проблема: <b>удержание падает уже два месяца — минус 30%</b>. Новые люди скачивают приложение, но быстро перестают им пользоваться. Инвесторы задают вопросы.<br><br><span class="it">Я уверен, что людям скучно тренироваться одним.</span> Нам нужна соцсеть: друзья, лента, лайки. Посмотри, что можно сделать.<br><br>У тебя четыре недели.</div>
+      <div class="person" style="background:var(--panel2);border-radius:12px;padding:14px 16px;max-width:680px">${av('mentor', 36, 'happy')}<span style="font-size:14px;color:var(--soft)"><b style="color:var(--ink)">Вера:</b> «Удержание (retention) — это сколько новых людей продолжают пользоваться приложением. А мнение CEO — пока лишь гипотеза. Проверь её, прежде чем строить.»</span></div>` }
+  ];
+  const s = steps[idx[st]];
+  const lastBtn = S.view === 'intro' ? '<button class="btn" data-go="hub">Дальше</button>' : '<button class="btn" data-go="work">Начать работу</button>';
+  return `<div class="wrap" style="max-width:1000px;min-height:100vh;display:flex;flex-direction:column">
+    <header class="top"><button class="logo" data-go="home"><b>B</b><span>Become PM</span></button><span style="font-size:13px;color:var(--mute)">${S.view === 'brief' ? 'Кейс 1 · ' : ''}${st + 1} из ${TOTAL} · ${s.label}</span></header>
+    <div class="step" style="padding:clamp(28px,5vw,56px) 0;display:flex;flex-direction:column;gap:22px;flex:1">${s.html}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;border-top:1px solid var(--line);padding-top:20px;flex-wrap:wrap">
+      <div style="display:flex;gap:6px;align-items:center" aria-hidden="true">${dots}</div>
+      <div style="display:flex;gap:10px">${st > 0 ? '<button class="line-btn" data-step="-1">Назад</button>' : S.view === 'brief' ? '<button class="line-btn" data-go="hub">К кейсам</button>' : ''}${st < TOTAL - 1 ? '<button class="btn" data-step="1">Дальше</button>' : lastBtn}</div>
+    </div>
+  </div>`;
+}
+
+function hub() {
+  const lv = xpLevel(), pct = Math.min(100, Math.round((S.xp - lv.from) / (lv.to - lv.from) * 100));
+  const locked = (n, t, d, skill) => `<div class="card" style="padding:24px;display:flex;flex-direction:column;gap:14px;background:#111A1C"><div style="display:flex;justify-content:space-between;align-items:center"><span class="label">Кейс ${n}</span><span style="font-size:12px;color:var(--mute)">скоро</span></div><span class="serif" style="font-size:22px;line-height:1.25;color:var(--soft)">${t}</span><p style="margin:0;font-size:14px;font-weight:300;line-height:1.6;color:var(--mute)">${d}</p><div style="margin-top:auto;border-top:1px solid var(--line);padding-top:12px;font-size:12px;color:var(--mute)">Навык: ${skill}</div></div>`;
+  return `<div class="wrap">
+    <header class="top"><button class="logo" data-go="home"><b>B</b><span>Become PM</span></button><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button class="line-btn" data-go="intro" style="font-size:14px;min-height:40px;border-color:transparent;color:var(--soft)">Как играть</button><button class="line-btn" data-auth="login" style="font-size:14px;min-height:40px">Войти</button><button class="btn" data-auth="signup" style="padding:9px 18px;min-height:40px;font-size:14px">Регистрация</button></div></header>
+    <section style="display:flex;flex-wrap:wrap;gap:24px;align-items:center;padding:40px 0 28px">
+      <div style="flex:999 1 420px;display:flex;flex-direction:column;gap:12px"><h1 class="serif" style="margin:0;font-weight:500;font-size:clamp(34px,5vw,48px);line-height:1.08">${best ? 'С возвращением.' : 'Готова к первому кейсу?'}</h1><p class="lead">${best ? 'Можешь пройти кейс заново и улучшить результат — или дождаться новых кейсов.' : 'Каждый кейс — история реальной продуктовой проблемы. Выбери кейс, познакомься с компанией и начни работу.'}</p></div>
+      <div class="card" style="flex:1 1 300px;padding:20px;display:flex;gap:16px;align-items:center">${av('me', 64)}<div style="flex:1;display:flex;flex-direction:column;gap:8px"><span class="label" style="color:var(--amber)">Уровень ${lv.n}</span><span class="serif" style="font-size:22px">${lv.name}</span><div class="bar" style="height:4px"><i style="width:${pct}%"></i></div><span style="font-size:12px;color:var(--mute)">${S.xp} / ${lv.to} опыта${best ? ` · лучший результат: <b style="color:var(--amber)">${best}</b>` : ''}</span></div></div>
+    </section>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:20px">
+      <div class="card" style="padding:24px;display:flex;flex-direction:column;gap:16px;background:var(--panel2);border-color:var(--amber);box-shadow:0 0 40px rgba(242,181,107,.12)">
+        <div style="display:flex;justify-content:space-between;align-items:center"><span class="label" style="color:var(--amber)">Кейс 1</span><span style="font-size:11px;color:#0D1416;background:var(--teal);border-radius:999px;padding:3px 9px;font-weight:700">${best ? 'пройден · ' + best : 'доступен'}</span></div>
+        <span class="serif" style="font-size:23px;line-height:1.25">Почему уходят из фитнес-приложения?</span>
+        <p style="margin:0;font-size:14px;font-weight:300;line-height:1.6;color:var(--soft)">Стартап FitStart теряет новых пользователей. Разберись, что происходит.</p>
+        <div style="display:flex;align-items:center;gap:10px"><div style="display:flex">${['max', 'anna', 'lesha'].map((p, i) => `<span style="margin-left:${i ? -8 : 0}px;display:flex">${av(p, 30)}</span>`).join('')}</div><span style="font-size:12px;color:var(--mute)">~15 минут · навык: исследование</span></div>
+        <button class="btn" data-go="brief" style="margin-top:auto">${best ? 'Пройти заново' : 'Начать первый кейс'}</button>
+      </div>
+      ${locked(2, 'Подписку отменяют после пробного периода', 'Отдел продаж хочет скидку. Данные говорят другое.', 'метрики')}
+      ${locked(3, 'Три отдела, один спринт', 'Все хотят свою фичу. Какую выбрать и как сказать «нет»?', 'приоритизация')}
+    </div>
+  </div>`;
+}
+
+function authModal() {
+  if (!S.auth) return '';
+  const signup = S.auth === 'signup';
+  const field = (id, label, type, ac) => `<label for="${id}" style="display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--soft)">${label}<input id="${id}" type="${type}" autocomplete="${ac}" style="font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line2);border-radius:10px;padding:12px 14px;min-height:46px"></label>`;
+  const body = S.auth === 'soon'
+    ? `<div style="display:flex;flex-direction:column;gap:14px;align-items:flex-start">${SPARK}<span class="serif" style="font-size:24px">Скоро будет</span><p style="margin:0;color:var(--soft);line-height:1.7">Аккаунты появятся в следующей версии игры. А пока твой прогресс сохраняется в этом браузере — просто возвращайся с того же устройства.</p><button class="btn" data-auth="close">Понятно</button></div>`
+    : `<div style="display:flex;gap:6px;background:var(--bg);border-radius:999px;padding:4px">${['signup', 'login'].map(m => `<button data-auth="${m}" style="flex:1;border:0;border-radius:999px;padding:10px;min-height:42px;font-weight:600;background:${S.auth === m ? 'var(--panel2)' : 'transparent'};color:${S.auth === m ? 'var(--ink)' : 'var(--mute)'}">${m === 'signup' ? 'Регистрация' : 'Вход'}</button>`).join('')}</div>
+      <span class="serif" style="font-size:24px">${signup ? 'Создай аккаунт' : 'С возвращением'}</span>
+      ${signup ? field('a-name', 'Имя', 'text', 'name') : ''}${field('a-mail', 'Email', 'email', 'email')}${field('a-pass', 'Пароль', 'password', signup ? 'new-password' : 'current-password')}
+      <button class="btn" data-authsubmit>${signup ? 'Создать аккаунт' : 'Войти'}</button>
+      <span style="font-size:12px;color:var(--mute);text-align:center">${signup ? 'Играть можно и без аккаунта' : 'Нет аккаунта? Переключись на «Регистрация»'}</span>`;
+  return `<div class="modal-bg" data-auth-bg><div class="modal card" role="dialog" aria-modal="true" aria-label="${signup ? 'Регистрация' : 'Вход'}"><button class="line-btn" data-auth="close" aria-label="Закрыть" style="position:absolute;right:14px;top:14px;min-height:36px;padding:4px 12px">✕</button>${body}</div></div>`;
+}
+
+function mentorTip() {
+  const n = S.ins.length, talkedAny = Object.keys(S.talked).length > 0, askedAny = Object.keys(S.asked).length > 0;
+  let id, text;
+  if (S.src === 'overview' && n === 0 && !Object.keys(S.opened).length) { id = 't0'; text = 'Это твой рабочий стол. Здесь видно, где можно искать ответы. Каждый источник тратит рабочие дни, так что выбирай с умом. Многие продакты начинают с данных — чтобы понять, <i>что</i> происходит.'; }
+  else if (n === 0 && S.src === 'analytics') { id = 't1'; text = 'Начни с данных. На графике видно, какая доля новичков остаётся с каждым днём. Где люди уходят сильнее всего? Нашла важное — нажми «Сохранить инсайт».'; }
+  else if (n === 0 && S.src !== 'overview') { id = 't1b'; text = 'Изучай источник и сохраняй всё важное как инсайт — он появится справа.'; }
+  else if (n === 1) { id = 't2'; text = 'Отлично, это твой первый инсайт! Он появился справа и добавил балл гипотезе. Посмотри второй график ниже — когда началось падение?'; }
+  else if (S.src === 'users' && !talkedAny) { id = 't3'; text = 'Выбери, с кем поговорить. Совет: спрашивай о том, что человек делал, а не что он думает или хотел бы.'; }
+  else if (S.src === 'users' && talkedAny && !askedAny) { id = 't4'; text = 'Выбери вопрос внизу. Обрати внимание, какие вопросы дают полезные ответы, а какие — нет.'; }
+  else if (!talkedAny) { id = 't5'; text = 'Данные показывают, <i>что</i> происходит. Чтобы понять <i>почему</i> — поговори с пользователями. Открой «Интервью».'; }
+  else if (!S.opened.team && n >= 3) { id = 't6'; text = 'Картина складывается. Падение началось в определённый момент — может, в продукте что-то менялось? Спроси команду.'; }
+  else if (n >= 4) { id = 't7'; text = 'У тебя уже достаточно инсайтов. Когда будешь уверена — нажми «Принять решение».'; }
+  else return '';
+  if (S.hidden && S.hidden[id]) return '';
+  return `<div class="nudge" style="border-color:#3B5A55">${av('mentor', 34, 'happy')}<span style="font-size:14px;flex:1;color:var(--soft)"><b style="color:var(--ink)">Вера:</b> ${text}</span><button class="line-btn" data-hide="${id}" style="font-size:13px;padding:6px 12px;min-height:36px">Понятно</button></div>`;
+}
+
+function work() {
+  const nav = SOURCES.map(s => `<button class="src ${S.src === s.id ? 'on' : ''}" data-src="${s.id}"><span class="dot" style="background:${s.color}"></span><span>${s.label}</span><small>${s.id === 'overview' || S.opened[s.id] ? '' : s.id === 'users' ? '1 день / чел.' : s.cost ? s.cost + ' день' : 'бесплатно'}</small></button>`).join('');
+  const nudge = S.day >= 10 && !S.result ? `<div class="nudge">${av('max', 30)}<span style="font-size:14px"><b>Максим:</b> <span style="color:var(--soft)">${S.day >= 15 ? '«Время почти вышло. Жду решение.»' : '«Как продвигается? Уже можно начинать соцсеть?»'}</span></span></div>` : '';
+  const warn = S.warn ? `<div class="nudge" style="border-color:var(--rose)"><span style="color:var(--rose);font-size:14px">${S.warn}</span></div>` : '';
+  const toast = S.last ? `<div class="toast" role="status">${SPARK}<span><b>Инсайт сохранён.</b> <span style="color:var(--soft)">${INS[S.last].text}</span></span><b style="color:var(--amber);white-space:nowrap">+10 опыта</b></div>` : '';
+  return `<div class="ws">
+    <nav class="side" aria-label="Источники">
+      <button class="logo hide-m" data-go="home" style="padding:4px 8px 18px"><b>B</b><span style="font-size:17px">Become PM</span></button>
+      <span class="label hide-m" style="padding:6px 10px">Источники</span>${nav}
+      <div class="hide-m" style="margin-top:auto;border:1px solid var(--line);border-radius:12px;padding:14px;font-size:12px;color:var(--mute);line-height:1.6">Первое открытие источника тратит дни. Возвращаться можно бесплатно.</div>
+    </nav>
+    <main class="main">
+      ${topBar()}${mentorTip()}${nudge}${warn}
+      ${sourceView()}
+    </main>
+    <aside class="aside">${insightsPanel()}</aside>
+  </div>${toast}`;
+}
+
+function decide() {
+  const opt = (kind, id, title, sub, on, sq) => `<button class="opt ${on ? 'on' : ''} ${sq ? 'sq' : ''}" data-${kind}="${id}"><i></i><span style="display:flex;flex-direction:column;gap:2px"><span>${title}</span>${sub ? `<span style="font-size:12px;color:var(--mute)">${sub}</span>` : ''}</span></button>`;
+  const causes = CAUSES.map(c => { const { pro, con } = supportOf(c.id); return opt('cause', c.id, c.title, `инсайтов за: ${pro}${con ? ` · против: ${con}` : ''}`, S.cause === c.id); }).join('');
+  const fixes = FIXES.map(f => opt('fix', f.id, f.title, f.note, S.fix === f.id)).join('');
+  const ev = S.ins.length ? S.ins.map(k => opt('ev', k, INS[k].text, SRC[INS[k].src].label, S.ev.includes(k), true)).join('') : '<p class="serif it" style="color:var(--mute);margin:0">У тебя нет сохранённых инсайтов. Решение без доказательств будет сложно защитить.</p>';
+  const ready = S.cause && S.fix;
+  return `<div class="wrap" style="max-width:900px">
+    <header class="top"><button class="logo" data-go="home"><b>B</b><span>Become PM</span></button><button class="line-btn" data-go="work">← Вернуться к работе</button></header>
+    <div style="padding:30px 0 10px"><span class="label">День ${S.day} из ${MAX_DAY}</span><h1 class="serif" style="margin:8px 0 6px;font-weight:500;font-size:clamp(30px,4.5vw,40px)">Твоё решение</h1><p style="margin:0;color:var(--soft);font-weight:300">Назови причину, выбери, что делать, и подкрепи решение инсайтами — Максим захочет доказательств.</p></div>
+    <div style="display:flex;flex-direction:column;gap:26px;padding-top:16px">
+      <section style="display:flex;flex-direction:column;gap:10px"><span class="serif" style="font-size:21px">1. В чём настоящая причина?</span>${causes}</section>
+      <section style="display:flex;flex-direction:column;gap:10px"><span class="serif" style="font-size:21px">2. Что будем делать?</span>${fixes}</section>
+      <section style="display:flex;flex-direction:column;gap:10px"><span class="serif" style="font-size:21px">3. Какие инсайты это доказывают? <span style="font-size:14px;color:var(--mute);font-family:Manrope">до 3</span></span>${ev}</section>
+      <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:20px"><button class="btn" data-submit ${ready ? '' : 'disabled'} style="font-size:16px;padding:15px 28px">Представить решение</button><span style="font-size:13px;color:var(--mute)">${ready ? 'Решение нельзя будет изменить.' : 'Выбери причину и решение.'}</span></div>
+    </div>
+  </div>`;
+}
+
+function evaluate() {
+  const fix = FIXES.find(f => f.id === S.fix);
+  let score = 0;
+  if (S.cause === 'hard') score += 35;
+  score += { short:35, push:12, social:0, dark:0 }[S.fix];
+  const proofs = S.ev.filter(k => INS[k].hyp === S.cause && INS[k].s > 0);
+  const wrongProofs = S.ev.filter(k => !(INS[k].hyp === S.cause && INS[k].s > 0));
+  score += Math.min(3, proofs.length) * 6 - wrongProofs.length * 4;
+  if (S.ins.includes('team35')) score += 6;
+  if (S.ins.includes('anna') || S.ins.includes('sveta')) score += 4;
+  if (S.day <= 12) score += 5;
+  score = Math.max(0, Math.min(100, score));
+  const grade = score >= 92 ? 'S' : score >= 78 ? 'A' : score >= 58 ? 'B' : score >= 38 ? 'C' : 'D';
+  const end = S.fix === 'short' ? 38 : S.fix === 'push' ? 29 : S.fix === 'social' ? 25 : 26;
+  const convinced = proofs.length >= 2;
+  S.result = { score, grade, end, convinced, proofs: proofs.length };
+  S.xp += score;
+  try { const order = 'SABCD'; if (!best || order.indexOf(grade) < order.indexOf(best)) { localStorage.setItem('becomepm-best', grade); best = grade; } } catch (e) {}
+}
+
+function result() {
+  const R = S.result, good = S.fix === 'short';
+  const heads = {
+    short: S.cause === 'hard' ? ['Причина найдена', 'слишком сложный старт'] : ['Повезло', 'решение сработало, но причину ты назвала неверно'],
+    push: ['Частичный успех', 'напоминания лечат симптом, а не причину'],
+    social: ['Ложный след', 'соцсеть не вернула новичков'],
+    dark: ['Ложный след', 'тёмная тема нужна, но не новичкам']
+  }[S.fix];
+  const weeks = [26, 26 + (R.end - 26) * .3, 26 + (R.end - 26) * .6, 26 + (R.end - 26) * .85, R.end];
+  const maxW = Math.max(...weeks, 30);
+  const conf = good ? ['#F2B56B', '#5FB3A8', '#C9B6E4', '#E39A8C', '#9FC7E6'].flatMap((c, i) => [`<i class="conf" style="background:${c};left:${8 + i * 19}%;top:${10 + (i % 2) * 14}px;transform:rotate(${i * 37}deg)"></i>`, `<i class="conf" style="background:${c};right:${6 + i * 15}%;bottom:${14 + (i % 3) * 10}px;transform:rotate(${-i * 29}deg)"></i>`]).join('') : '';
+  const ceoLine = good && R.convinced ? '«Признаю, я ошибался насчёт соцсети. Отличная работа.»'
+    : good ? '«Цифры растут — хорошо. Но в следующий раз приноси больше доказательств.»'
+    : S.fix === 'social' ? '«Три спринта на соцсеть… а люди всё равно уходят. Что пошло не так?»'
+    : S.fix === 'push' ? '«Чуть лучше, но это не то, на что я надеялся.»'
+    : '«Тёмная тема красивая. Но удержание не изменилось.»';
+  const annaLine = good ? '«Вернулась попробовать — и уже третью неделю тренируюсь!»' : '«Нет, я так и не вернулась. Это приложение не для меня.»';
+  const path = [
+    ['drop', 'Заметить обрыв удержания на 3–4 день'],
+    ['sept', 'Понять, что падение началось в сентябре'],
+    [S.ins.includes('anna') ? 'anna' : 'sveta', 'Спросить ушедших о поведении, а не о мнении'],
+    ['team35', 'Узнать от команды, что в сентябре удлинили первую тренировку'],
+    ['dina', 'Проверить связь: дошёл до конца первой тренировки → остаётся']
+  ].map(([k, t]) => { const ok = S.ins.includes(k); return `<div style="display:flex;gap:12px;align-items:flex-start"><span class="check" style="${ok ? 'background:var(--teal);color:#0D1416' : 'border:1px solid var(--rose);color:var(--rose)'}">${ok ? '✓' : '!'}</span><span style="line-height:1.55;${ok ? '' : 'color:var(--soft)'}">${ok ? t : 'Пропущено: ' + t.charAt(0).toLowerCase() + t.slice(1)}</span></div>`; }).join('');
+  const badQs = Object.keys(S.asked).filter(k => { const pid = k.replace(/\d+$/, ''), i = +k.match(/\d+$/)[0]; return INTERVIEWS[pid].qs[i].tip; }).length;
+  const lv = xpLevel();
+  return `<div class="wrap" style="max-width:1100px">
+    <header class="top"><button class="logo" data-go="home"><b>B</b><span>Become PM</span></button><span style="font-size:12px;letter-spacing:.18em;color:var(--amber);font-weight:600">КЕЙС 1 · ИТОГ</span></header>
+    <section class="card" style="position:relative;overflow:hidden;margin-top:28px;padding:clamp(24px,4vw,40px);display:flex;flex-wrap:wrap;gap:32px;align-items:center;border-color:var(--line2)">${conf}
+      <div class="grade">${R.grade}</div>
+      <div style="flex:1 1 340px;display:flex;flex-direction:column;gap:10px"><span class="label" style="color:${good ? 'var(--teal)' : 'var(--rose)'}">${heads[0]}</span><h1 class="serif" style="margin:0;font-weight:500;font-size:clamp(28px,4vw,36px);line-height:1.2">${good && S.cause === 'hard' ? 'Причина — <span class="it" style="color:var(--amber)">слишком сложный старт</span>' : heads[1].charAt(0).toUpperCase() + heads[1].slice(1)}</h1><p style="margin:0;font-weight:300;color:var(--soft);line-height:1.7">Ты выбрала: «${FIXES.find(f => f.id === S.fix).title}». Через 4 недели удержание D7: ${R.end}%.</p></div>
+      <div style="flex:0 1 220px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;align-items:flex-end;gap:8px;height:90px" role="img" aria-label="Удержание через 4 недели: ${R.end}%">${weeks.map((v, i) => `<i style="flex:1;height:${v / maxW * 100}%;background:${i === 4 ? (good ? 'var(--teal)' : 'var(--rose)') : 'var(--bar)'};border-radius:4px 4px 0 0"></i>`).join('')}</div><span class="serif" style="font-size:26px">26% → <span style="color:${good ? 'var(--teal)' : 'var(--rose)'}">${R.end}%</span></span></div>
+    </section>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px;margin-top:18px">
+      <div class="card msg" style="padding:20px">${av('anna', 48, good ? 'happy' : 'sad')}<div><div style="font-size:13px;color:var(--mute)">Анна · через месяц</div><div class="quote" style="font-size:17px">${annaLine}</div></div></div>
+      <div class="card msg" style="padding:20px">${av('max', 48, good ? 'happy' : 'sad')}<div><div style="font-size:13px;color:var(--mute)">Максим · CEO</div><div class="quote" style="font-size:17px">${ceoLine}</div></div></div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;margin-top:18px">
+      <section class="card" style="flex:999 1 460px;padding:24px;display:flex;flex-direction:column;gap:14px"><span class="serif" style="font-size:22px">Твой путь</span>${path}
+        ${badQs ? `<div style="font-size:14px;color:var(--soft)">Вопросов о мнении или будущем в интервью: <b style="color:var(--amber)">${badQs}</b>. Такие вопросы дают вежливые, но пустые ответы.</div>` : ''}
+        <div style="font-size:14px;color:var(--soft)">Доказательств в решении: <b style="color:var(--amber)">${R.proofs}</b>${R.convinced ? '' : ' — CEO нужно хотя бы два, чтобы поверить.'} · Потрачено дней: <b style="color:var(--amber)">${S.day}</b> из ${MAX_DAY}</div>
+        <div style="background:var(--panel2);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:6px"><span class="label" style="color:var(--amber)">Что было на самом деле</span><p style="margin:0;font-weight:300;line-height:1.7;color:#D6DCDC">В сентябре маркетинг попросил сделать первую тренировку «настоящей» — 35 минут вместо 15. Новички не справлялись, им было стыдно, и они молча уходили на 3–4 день. Людям было не скучно — им было тяжело. Соцсеть и тёмная тема — реальные просьбы, но от тех, кто и так остаётся.</p></div>
+      </section>
+      <aside style="flex:1 1 280px;display:flex;flex-direction:column;gap:16px">
+        <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:12px;border-color:var(--amber);box-shadow:0 0 40px rgba(242,181,107,.12)"><div style="display:flex;justify-content:space-between;align-items:baseline"><span class="label">Опыт</span><b style="color:var(--amber)">+${R.score + S.ins.length * 10}</b></div><span class="serif" style="font-size:22px">Уровень ${lv.n} · <span class="it">${lv.name}</span></span><div class="bar" style="height:4px"><i style="width:${Math.min(100, (S.xp - lv.from) / (lv.to - lv.from) * 100)}%"></i></div><span style="font-size:13px;color:var(--soft)">Новые кейсы появятся в следующей версии.</span></div>
+        <div class="ins" style="padding:20px;transform:rotate(-1deg)"><span style="font-size:11px;letter-spacing:.16em;color:#6B4614;font-weight:700">УРОК ПРОДАКТА</span><span class="serif" style="font-size:19px">Спрашивай о прошлом поведении, а не о мнениях и планах. И проверяй, что изменилось в продукте, когда начались проблемы.</span><span style="font-size:13px;color:#5C5547">Подробнее — в книге «The Mom Test», Роб Фитцпатрик</span></div>
+        <div class="card" style="padding:22px;display:flex;flex-direction:column;gap:12px;background:var(--panel2)"><span class="serif" style="font-size:20px">Сохрани свой прогресс</span><span style="font-size:14px;color:var(--soft);line-height:1.6">Создай аккаунт, чтобы не потерять уровень и результаты и играть с любого устройства.</span><button class="btn" data-auth="signup">Создать аккаунт</button><button class="line-btn" data-auth="login" style="text-align:center">У меня уже есть аккаунт</button></div>
+        <button class="line-btn" data-go="hub" style="text-align:center">К кейсам</button><button class="line-btn" data-restart style="text-align:center">Пройти кейс заново</button>
+      </aside>
+    </div>
+  </div>`;
+}
+
+/* ---------- render & events ---------- */
+function render() {
+  const views = { home, intro: brief, hub, brief, work, decide, result };
+  app.innerHTML = views[S.view]() + authModal();
+  const f = app.querySelector('.modal input'); if (f) f.focus();
+  const t = app.querySelector('.toast');
+  if (t) setTimeout(() => { t.style.transition = 'opacity .4s'; t.style.opacity = '0'; setTimeout(() => t.remove(), 400); }, 2600);
+  document.title = { intro:'Как играть — Become PM', hub:'Кейсы — Become PM', home:'Become PM — кейс FitStart', brief:'Брифинг — Become PM', work:'Работа над кейсом — Become PM', decide:'Решение — Become PM', result:'Итог кейса — Become PM' }[S.view];
+}
+app.addEventListener('click', e => {
+  if (e.target.matches('[data-auth-bg]')) { S.auth = null; return render(); }
+  const b = e.target.closest('button');
+  if (!b) return;
+  const d = b.dataset;
+  if (d.auth) { S.auth = d.auth === 'close' ? null : d.auth; return render(); }
+  if ('authsubmit' in d) { S.auth = 'soon'; return render(); }
+  if (d.go) {
+    if (d.go === 'intro' || d.go === 'brief') S.step = 0;
+    if (d.go === 'brief' && S.result) { const keep = S.xp; S = fresh(); S.xp = keep; }
+    if (d.go === 'start') { let seen = null; try { seen = localStorage.getItem('becomepm-seen'); } catch (e) {} try { localStorage.setItem('becomepm-seen', '1'); } catch (e) {} S.step = 0; return go(seen ? 'hub' : 'intro'); }
+    return go(d.go);
+  }
+  if (d.step) { S.step = Math.max(0, (S.step || 0) + +d.step); render(); window.scrollTo(0, 0); return; }
+  if (d.hide) { S.hidden[d.hide] = true; return render(); }
+  if (d.src) return openSource(d.src);
+  if (d.talk) return talk(d.talk);
+  if (d.ask) { const [p, i] = d.ask.split('|'); return ask(p, +i); }
+  if (d.save) return save(d.save);
+  if (d.cause) { S.cause = d.cause; return render(); }
+  if (d.fix) { S.fix = d.fix; return render(); }
+  if (d.ev) { const k = d.ev; S.ev = S.ev.includes(k) ? S.ev.filter(x => x !== k) : S.ev.length < 3 ? S.ev.concat(k) : S.ev; return render(); }
+  if ('submit' in d) { if (S.cause && S.fix) { evaluate(); go('result'); } return; }
+  if ('restart' in d) { const keep = S.xp; S = fresh(); S.xp = keep; S.view = 'brief'; render(); window.scrollTo(0, 0); }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && S.auth) { S.auth = null; render(); } });
+render();
+}
+</script>
+</body>
+</html>
