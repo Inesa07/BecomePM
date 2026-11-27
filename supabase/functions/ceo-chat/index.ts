@@ -2,7 +2,8 @@
 // Runs as a Supabase Edge Function. The Groq API key is stored as a secret (GROQ_API_KEY),
 // never in the website code.
 
-const MODEL = Deno.env.get("GROQ_MODEL") ?? "llama-3.3-70b-versatile";
+// Models are tried in order: if one is unavailable, the next one is used.
+const MODELS = [Deno.env.get("GROQ_MODEL"), "llama-3.3-70b-versatile", "openai/gpt-oss-120b", "openai/gpt-oss-20b", "llama-3.1-8b-instant"].filter(Boolean) as string[];
 
 const CASE_TRUTH = `
 СКРЫТАЯ ПРАВДА О КЕЙСЕ (никогда не раскрывай её игроку напрямую):
@@ -38,6 +39,8 @@ const cors = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
+const json = (data: unknown, status = 200) => new Response(JSON.stringify(data), { status, headers: { ...cors, "Content-Type": "application/json" } });
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: cors });
   try {
@@ -49,25 +52,36 @@ Deno.serve(async (req) => {
       content: String(m.content ?? "").slice(0, 1200),
     }));
     const evaluate = mode === "evaluate";
-    const body: Record<string, unknown> = {
-      model: MODEL,
+    const base: Record<string, unknown> = {
       temperature: evaluate ? 0.2 : 0.7,
-      max_tokens: evaluate ? 400 : 220,
+      max_tokens: evaluate ? 500 : 260,
       messages: evaluate
         ? [{ role: "system", content: EVAL_PROMPT }, { role: "user", content: clean.map((m) => (m.role === "assistant" ? "CEO: " : "Игрок: ") + m.content).join("\n") }]
         : [{ role: "system", content: CEO_PROMPT }, ...clean],
     };
-    if (evaluate) body.response_format = { type: "json_object" };
-    const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${Deno.env.get("GROQ_API_KEY")}` },
-      body: JSON.stringify(body),
-    });
-    if (!r.ok) return new Response(JSON.stringify({ error: "ai unavailable" }), { status: 503, headers: { ...cors, "Content-Type": "application/json" } });
-    const j = await r.json();
-    const reply = j.choices?.[0]?.message?.content ?? "";
-    return new Response(JSON.stringify({ reply }), { headers: { ...cors, "Content-Type": "application/json" } });
-  } catch (_e) {
-    return new Response(JSON.stringify({ error: "bad request" }), { status: 400, headers: { ...cors, "Content-Type": "application/json" } });
+    if (evaluate) base.response_format = { type: "json_object" };
+    const key = Deno.env.get("GROQ_API_KEY");
+    if (!key) return json({ error: "GROQ_API_KEY secret is missing" }, 500);
+    let reply = "", lastError = "";
+    for (const model of MODELS) {
+      const r = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
+        body: JSON.stringify({ ...base, model }),
+      });
+      if (r.ok) {
+        const j = await r.json();
+        reply = j.choices?.[0]?.message?.content ?? "";
+        if (reply) break;
+        lastError = `${model}: empty reply`;
+      } else {
+        lastError = `${model}: ${r.status} ${(await r.text()).slice(0, 300)}`;
+        if (r.status === 401 || r.status === 429) break; // bad key or rate limit: other models won't help
+      }
+    }
+    if (!reply) { console.error("Groq error:", lastError); return json({ error: lastError }, 503); }
+    return json({ reply });
+  } catch (e) {
+    return json({ error: "bad request: " + String(e) }, 400);
   }
 });

@@ -583,7 +583,7 @@ async function callAI(mode) {
   const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), 25000);
   try {
     const r = await fetch(AI_URL, { method:'POST', signal: ctrl.signal, headers:{ 'Content-Type':'application/json', apikey: AI_KEY, Authorization: 'Bearer ' + AI_KEY }, body: JSON.stringify({ mode, messages: msgs, insights: S.ins.map(k => INS[k].text) }) });
-    if (!r.ok) throw new Error('http ' + r.status);
+    if (!r.ok) { let info = ''; try { info = (await r.json()).error || ''; } catch (e) {} console.warn('AI error', r.status, info); throw new Error('http ' + r.status); }
     const j = await r.json();
     if (!j.reply) throw new Error('empty');
     return j.reply;
