@@ -441,7 +441,7 @@ function home() {
   const windows = Array.from({ length: 45 }, (_, i) => `<i class="${lit.includes(i) ? 'l' : [4, 16, 28].includes(i) ? 't' : ''}" style="${lit.includes(i) ? `opacity:${.35 + (i % 5) * .12};animation-delay:${i * .37}s` : ''}"></i>`).join('');
   const played = Object.keys(PROG).length, nc = nextCase();
   const doCards = [
-    ['cases', 'Решать кейсы', `${CASES.length} истории из реальной работы продакта: фитнес-стартап, live-казино, бонусы. Каждая открывается после предыдущей.`, played ? `Пройдено: ${played} из ${CASES.length}` : 'Начни с первого'],
+    ['cases', 'Решать кейсы', `${CASES.length} кейсов из реальной работы продакта: казино, доставка еды, мобильные приложения. Каждый открывается после предыдущего.`, played ? `Пройдено: ${played} из ${CASES.length}` : 'Начни с первого'],
     ['glossary', 'Словарь продакта', `${GLOSSARY.length} главных слов продакт-менеджера простым языком: retention, воронка, MVP, A/B-тест…`, 'Читать'],
     ['principles', 'Мышление продакта', `${PRINCIPLES.length} логических правил, которые помогают решать любые продуктовые задачи.`, 'Читать'],
     ['stories', 'Истории продуктов', 'Как Instagram и Slack нашли успех — и почему провалились Quibi и Google Glass.', 'Читать']
